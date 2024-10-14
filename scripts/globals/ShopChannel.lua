@@ -4,7 +4,15 @@ local ShopChannel = {}
 function ShopChannel:init()
     print("here")
 
+    self.buttons = {}
+
     self.stage = Stage()
+
+    self.screen_helper = ScreenHelper()
+	self.stage:addChild(self.screen_helper)
+
+    self.screen_helper_upper = ScreenHelper()
+	self.stage:addChild(self.screen_helper_upper)
 
     self.offset = 0
 
@@ -28,6 +36,10 @@ function ShopChannel:init()
 
     Kristal.showCursor()
 
+    self:drawButton()
+
+    self:initButtons()
+
     self:setPreview()
 end
 
@@ -48,9 +60,13 @@ function ShopChannel:enter()
 end
 
 function ShopChannel:update()
+    self.screen_helper:update()
+    self.screen_helper_upper:update()
+
     if self.state == "MAIN" then
         if Input.pressed("confirm") then
             self:setPreview()
+            self:drawButton()
             self.offset = 0
             self.state = "SEARCH"
         end
@@ -80,6 +96,12 @@ function ShopChannel:update()
     end
 
     Kristal.showCursor()
+end
+
+function ShopChannel:initButtons()
+    --self.modbutton = Button(106, 86, "blank_button")
+    --table.insert(self.buttons, self.modbutton)
+	--self.screen_helper:addChild(self.modbutton)
 end
 
 function ShopChannel:setPreview()
@@ -121,9 +143,15 @@ function ShopChannel:changePage(page_num)
     self:setPreview()
 end
 
+function ShopChannel:drawButton()
+    for index, obj in pairs(self.preview_list) do
+        self.buttons[index] = ModButton(110, 115 + ((index - 1) * 130) - Utils.round(self.offset), index)
+        self.screen_helper:addChild(self.buttons[index])
+    end
+end
+
 function ShopChannel:changeMod(mod_num)
     self.mod = self.mod + mod_num
-
     self.mod = Utils.clamp(self.mod, 1, 10)
 
     self.mod_name = self.mod_list[self.mod]["_sName"]
@@ -137,7 +165,10 @@ end
 
 function ShopChannel:draw()
 
+    love.graphics.push()
+
     Draw.draw(self.bg, 0, 0)
+
     Draw.setColor(0, 0, 0)
     if self.is_loading then
         print("State loading")
@@ -159,6 +190,10 @@ function ShopChannel:draw()
 
         for index, obj in pairs(self.preview_list) do
             Draw.setColor(0, 0, 0)
+
+            if self.buttons[index] then
+                self.buttons[index].y = Utils.round((115 + ((index - 1) * 130) - Utils.round(self.offset)))
+            end
             -- Mod Info
             Draw.rectangle("line", 110, 115 + ((index - 1) * 130) - Utils.round(self.offset), 380, 100)
             love.graphics.print(obj["mod_name"], SCREEN_WIDTH/2 - 80, 115 + ((index - 1) * 130) - Utils.round(self.offset))
@@ -174,6 +209,11 @@ function ShopChannel:draw()
         Draw.draw(self.preview, SCREEN_WIDTH/2 - self.preview:getWidth()/2, SCREEN_HEIGHT/2 - self.preview:getHeight()/2)
         love.graphics.print(self.mod_name, SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT/2 - 100)
     end
+
+    self.screen_helper:draw()
+    self.screen_helper_upper:draw()
+
+    love.graphics.pop()
 
     love.graphics.push()
     Kristal.callEvent("postDraw")

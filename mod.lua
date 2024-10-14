@@ -172,8 +172,6 @@ function Mod:init()
         return source
     end)]]
 
-    self:setState("ShopChannel", false)
-
     self.cursor_1_tex = Assets.getTexture("cursor/cursor_1")
     self.cursor_1t_tex = Assets.getTexture("cursor/cursor_t")
     self.cursor_2_tex = Assets.getTexture("cursor/cursor_2")
