@@ -129,6 +129,8 @@ function Pregame:enterGame()
             Mod:setState("MainMenu", false)
         elseif self.selected_mod == "wii_mii" then
             Mod:setState("MiiChannel", false)
+        elseif self.selected_mod == "wii_shop" then
+            Mod:setState("ShopChannel", false)
         else
             Mod:setState("MainMenu", false)
         end

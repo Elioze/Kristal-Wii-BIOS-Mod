@@ -12,7 +12,8 @@ Mod.Shaders = {}
 Mod.wiiwares = {
     ["wii_food"] = "channels/food",
     ["wii_rtk"] = "channels/kristal",
-    ["wii_mii"] = "channels/vii_maker"
+    ["wii_mii"] = "channels/vii_maker",
+    ["wii_shop"] = "channels/shop"
 }
 
 Mod.Themes = {
@@ -132,7 +133,8 @@ function Mod:init()
         ["MainMenu"] = MainMenu,
         ["SettingsMenu"] = SettingsMenu,
         ["Pregame"] = Pregame,
-        ["MiiChannel"] = MiiChannel
+        ["MiiChannel"] = MiiChannel,
+        ["ShopChannel"] = ShopChannel
     }
 
     self._mouse_sprite_bak = MOUSE_SPRITE
@@ -169,6 +171,8 @@ function Mod:init()
         --source:setEffect("base_reverb")
         return source
     end)]]
+
+    self:setState("ShopChannel", false)
 
     self.cursor_1_tex = Assets.getTexture("cursor/cursor_1")
     self.cursor_1t_tex = Assets.getTexture("cursor/cursor_t")
@@ -289,7 +293,8 @@ function Mod:postInit()
 	if Kristal.load_wii_mod then
 		self:setState("MainMenu")
 	else
-		self:setState("HealthAndSafety")
+		--self:setState("HealthAndSafety")
+        self:setState("ShopChannel", false)
 	end
 end
 
