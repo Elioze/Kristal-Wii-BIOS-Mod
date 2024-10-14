@@ -165,6 +165,10 @@ function ShopChannel:draw()
         Draw.draw(self.preview, SCREEN_WIDTH/2 - self.preview:getWidth()/2, SCREEN_HEIGHT/2 - self.preview:getHeight()/2)
         love.graphics.print(self.mod_name, SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT/2 - 100)
     end
+
+    love.graphics.push()
+    Kristal.callEvent("postDraw")
+    love.graphics.pop()
 end
 
 return ShopChannel
