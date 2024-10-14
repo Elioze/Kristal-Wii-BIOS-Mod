@@ -148,9 +148,18 @@ function ShopChannel:draw()
     elseif self.state == "SEARCH" then
         Draw.rectangle("line", 105, 85, SCREEN_WIDTH/2 + 110, SCREEN_HEIGHT/2 + 80)
         Draw.pushScissor()
+        -- Mod List
         Draw.scissor(106, 86, SCREEN_WIDTH/2 + 108, SCREEN_HEIGHT/2 + 78)
+
+        -- Mod Scroller
+        Draw.rectangle("fill", 495, 121, 38, SCREEN_HEIGHT/2 + 11)
+        Draw.setColor(0.75, 0.75, 0.75)
+        Draw.rectangle("fill", 494, 120 + Utils.round(self.offset/#self.mod_list), 40, 152)
+        Draw.setColor(0, 0, 0)
+
         for index, obj in pairs(self.preview_list) do
             Draw.setColor(0, 0, 0)
+            -- Mod Info
             Draw.rectangle("line", 110, 115 + ((index - 1) * 130) - Utils.round(self.offset), 380, 100)
             love.graphics.print(obj["mod_name"], SCREEN_WIDTH/2 - 80, 115 + ((index - 1) * 130) - Utils.round(self.offset))
             love.graphics.print(obj["dev_name"], SCREEN_WIDTH/2 - 80, 170 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.75, 0.75)
