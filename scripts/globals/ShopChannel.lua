@@ -18,7 +18,7 @@ function ShopChannel:init()
 
     self.bg = Assets.getTexture("vii_channel/bg")
 
-    self.state = "SEARCH" -- MAIN, SEARCH, GAME 
+    self.state = "GAME" -- MAIN, SEARCH, GAME 
 
     self.page = 1
 
@@ -36,7 +36,7 @@ function ShopChannel:init()
 
     Kristal.showCursor()
 
-    self:setPreview()
+    self:changeMod()
 end
 
 function ShopChannel:enter()
@@ -45,12 +45,13 @@ function ShopChannel:enter()
     self.substate = "FALSE" -- TEST, FALSE
 	
 	if not Game.musicplay then
-		Game.musicplay = Music("shop")
+		Game.musicplay = Music("shop_intro")
+        Game.musicplay:setLooping(false)
 	end
 	
 	Kristal.showCursor()
     
-    self:drawButton()
+    --self:drawButton()
 	
 	self.cooldown = 0
 	
@@ -60,6 +61,11 @@ end
 function ShopChannel:update()
     self.screen_helper:update()
     self.screen_helper_upper:update()
+
+    if not Game.musicplay:isPlaying() then
+        Game.musicplay = Music("shop")
+        Game.musicplay:setLooping(true)
+    end
 
     if self.state == "MAIN" then
         if Input.pressed("confirm") then
@@ -77,7 +83,7 @@ function ShopChannel:update()
         end
     elseif self.state == "SEARCH" then
         if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() end
-        if Input.pressed("confirm") then self.state = "GAME" self:changeMod(0) self:removeButton() end
+        if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() end
 
         if Input.keyDown("down") then self.offset = self.offset + DT * 90 end
         if Input.keyDown("up") then self.offset = self.offset - DT * 90 end
@@ -85,7 +91,6 @@ function ShopChannel:update()
 
         if Input.keyDown("left") then self:changePage(-1) self:removeButton() self:drawButton() end
         if Input.keyDown("right") then self:changePage(1) self:removeButton() self:drawButton() end
-
 
     elseif self.state == "GAME" then
         if Input.pressed("left") then self:changeMod(-1) end
@@ -159,6 +164,11 @@ function ShopChannel:changeMod(mod_num)
     preview = love.filesystem.newFileData(preview, "preview.png")
     preview = love.graphics.newImage(preview)
 
+    local date = self.mod_list[self.mod]["_tsDateAdded"]
+    self.date = os.date("%m/%d/%Y", date)
+
+    self.dev_name = self.mod_list[self.mod]["_aSubmitter"]["_sName"]
+
     self.preview = preview
 end
 
@@ -194,7 +204,6 @@ function ShopChannel:draw()
                 self.buttons[index].y = Utils.round((115 + ((index - 1) * 130) - Utils.round(self.offset)))
             end
             -- Mod Info
-            Draw.rectangle("line", 110, 115 + ((index - 1) * 130) - Utils.round(self.offset), 380, 100)
             love.graphics.print(obj["mod_name"], SCREEN_WIDTH/2 - 80, 115 + ((index - 1) * 130) - Utils.round(self.offset))
             love.graphics.print(obj["dev_name"], SCREEN_WIDTH/2 - 80, 170 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.75, 0.75)
             love.graphics.print("Kristal", SCREEN_WIDTH/2 - 80, 195 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.5, 0.5)
@@ -205,8 +214,14 @@ function ShopChannel:draw()
         Draw.popScissor()
     elseif self.state == "GAME" then
         Draw.setColor(1, 1, 1)
-        Draw.draw(self.preview, SCREEN_WIDTH/2 - self.preview:getWidth()/2, SCREEN_HEIGHT/2 - self.preview:getHeight()/2)
-        love.graphics.print(self.mod_name, SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT/2 - 100)
+        Draw.draw(self.preview, SCREEN_WIDTH/2 - 450/2 + 6, 110 + 8, 0, 160/self.preview:getWidth(), 120/self.preview:getHeight())
+        Draw.setColor(0, 0, 0)
+        Draw.rectangle("line", SCREEN_WIDTH/2 - 450/2, 110, 450, 220)
+        love.graphics.print("Released "..self.date, 264, 184, 0, 0.5, 0.75)
+        love.graphics.print(self.dev_name, 264, 184 + 18, 0, 0.5, 0.75)
+        love.graphics.print("Fangame", 264, 184 + 18 + 20, 0, 0.5, 0.75)
+        Draw.setColor(0, 0, 1)
+        love.graphics.print(self.mod_name, 262, 269, 0, 0.75, 0.75)
     end
 
     self.screen_helper:draw()

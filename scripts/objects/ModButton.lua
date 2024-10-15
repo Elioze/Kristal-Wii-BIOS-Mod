@@ -24,11 +24,19 @@ function ModButton:update()
 	
 	local mx, my = love.mouse.getPosition()
 	local screen_x, screen_y = self:getScreenPos()
-	print(self.id, self:getScreenPos())
-	screen_x, screen_y = screen_x-self.width/2, screen_y-self.height/2
+	local up_y, down_y = 0, self.height
+
+	if screen_y + self.height > SCREEN_HEIGHT/2 + 78 + 86 then
+    	down_y = 100 - ((screen_y + self.height) - (SCREEN_HEIGHT/2 + 78 + 86))
+	end
+
+	if screen_y < 86 then
+    	up_y = (86 - screen_y)
+	end
+
 	if not self.pressed then
 		if (mx / Kristal.getGameScale() > screen_x) and (mx / Kristal.getGameScale() < (screen_x + self.width)) 
-		and (my / Kristal.getGameScale() > screen_y) and (my / Kristal.getGameScale() < (screen_y + self.height)) 
+		and (my / Kristal.getGameScale() > screen_y + up_y) and (my / Kristal.getGameScale() < (screen_y + down_y)) 
 		and self:canHover() then
 			self.hover = true
 			if self:canClick() then
@@ -55,7 +63,15 @@ end
 function ModButton:draw()
 	super:draw(self)
 
-	local screen_x, screen_y = self:getScreenPos()
+	local _, screen_y = self:getScreenPos()
+
+	if screen_y + self.height > SCREEN_HEIGHT/2 + 78 + 86 then
+    	Draw.scissor(-2, -1, self.width + 4, 100 - ((screen_y + self.height) - (SCREEN_HEIGHT/2 + 78 + 86)) + 2)
+	end
+
+	if screen_y < 86 then
+    	Draw.scissor(-2, self.height + 1, self.width + 4, -(100 + (screen_y - 86)) - 2)
+	end
 
 	if self.hover then
 		Draw.setColor(0, 0, 1)
