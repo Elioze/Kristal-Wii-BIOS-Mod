@@ -64,7 +64,7 @@ function ShopChannel:enter()
 	self.clickable = true
 
     if self.error then
-        self.popUp = popUp("Error", {"OK"}, function(clicked) 
+        self.popUp = popUp("Could not load Mods\n \n \nError code: "..self.request_code, {"OK"}, function(clicked) 
             if Game.musicplay then
                 Game.musicplay:remove()
                 Game.musicplay = nil
