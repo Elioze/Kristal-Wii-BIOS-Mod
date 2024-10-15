@@ -80,6 +80,7 @@ function ShopChannel:enter()
     end
 
     self.access_btn = Button(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+        self.current_page = 1
         self:changePage()
         self:setPreview()
         self:drawButton()
@@ -125,7 +126,7 @@ function ShopChannel:update()
 
     if self.state == "MAIN" then
         self.back_button.text = "Wii Menu"
-        if Input.pressed("confirm") then
+        --[[if Input.pressed("confirm") then
             self:changePage()
             self:setPreview()
             self:drawButton()
@@ -138,23 +139,24 @@ function ShopChannel:update()
                 Game.musicplay = nil
             end
             Mod:setState("MainMenu", false)
-        end
+        end]]
     elseif self.state == "SEARCH" then
         self.back_button.text = "Back"
-        if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() self:removePageButton() end
-        if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() self:removePageButton() end
 
-        if Input.keyDown("down") then self.offset = self.offset + DT * 90 end
+        --[[if Input.keyDown("down") then self.offset = self.offset + DT * 90 end
         if Input.keyDown("up") then self.offset = self.offset - DT * 90 end
         self.offset = Utils.clamp(self.offset, 0, 101 * #self.mod_list)
 
+        if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() self:removePageButton() end
+        if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() self:removePageButton() end
+
         if Input.keyDown("left") then self:changePage(-1) self:removeButton() self:drawButton() end
-        if Input.keyDown("right") then self:changePage(1) self:removeButton() self:drawButton() end
+        if Input.keyDown("right") then self:changePage(1) self:removeButton() self:drawButton() end]]
 
     elseif self.state == "GAME" then
         if Input.pressed("left") then self:changeMod(-1) end
         if Input.pressed("right") then self:changeMod(1) end
-        if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() self:changePage() end
+        --if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() self:changePage() end
     end
 
     Kristal.showCursor()
@@ -238,7 +240,6 @@ function ShopChannel:pageButton()
     if self.current_page ~= self.pages then
         self.right_button = Button(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) self:removeButton() self:drawButton() end)
         self.right_button.sprite:setScale(40/self.right_button.sprite.width, 40/self.right_button.sprite.height)
-        --self.right_button.sprite:setScale(80/self.right_button.sprite.width, 80/self.right_button.sprite.height)
         self.screen_helper:addChild(self.right_button)
     end
 end
@@ -249,6 +250,7 @@ end
 
 function ShopChannel:drawMainButton()
     self.access_btn = Button(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+        self.current_page = 1
         self:changePage()
         self:setPreview()
         self:drawButton()
