@@ -75,6 +75,25 @@ function ShopChannel:enter()
         end)
 		self.screen_helper_upper:addChild(self.popUp)
     end
+
+    self.back_button = TextButtonInApp(120, 400, "Wii Menu", function ()
+        if Game.wii_menu.state == "MAIN" then
+            if Game.musicplay then
+                Game.musicplay:remove()
+                Game.musicplay = nil
+            end
+            Mod:setState("MainMenu", false)
+        elseif Game.wii_menu.state == "SEARCH" then
+            Game.wii_menu.state = "MAIN"
+            self:removeButton()
+            self:removePageButton()
+        else
+            self.state = "SEARCH"
+            self:drawButton()
+            self:changePage()
+        end
+    end)
+    self.screen_helper:addChild(self.back_button)
 end
 
 function ShopChannel:update()
@@ -87,6 +106,7 @@ function ShopChannel:update()
     end
 
     if self.state == "MAIN" then
+        self.back_button.text = "Wii Menu"
         if Input.pressed("confirm") then
             self:changePage()
             self:setPreview()
@@ -102,6 +122,7 @@ function ShopChannel:update()
             Mod:setState("MainMenu", false)
         end
     elseif self.state == "SEARCH" then
+        self.back_button.text = "Back"
         if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() self:removePageButton() end
         if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() self:removePageButton() end
 
@@ -177,6 +198,13 @@ function ShopChannel:removeButton()
     self.buttons = {}
 end
 
+function ShopChannel:drawButton()
+    for index, obj in pairs(self.preview_list) do
+        self.buttons[index] = ModButton(110, 115 + ((index - 1) * 130) - Utils.round(self.offset), index)
+        self.screen_helper:addChild(self.buttons[index])
+    end
+end
+
 function ShopChannel:removePageButton()
     if self.left_button then self.left_button:remove() end
     if self.right_button then self.right_button:remove() end
@@ -191,13 +219,6 @@ function ShopChannel:pageButton()
     if self.current_page ~= self.pages then
         self.right_button = Button(SCREEN_WIDTH/2 + 195, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) print("right", self.right_button.pressed) end)
         self.screen_helper:addChild(self.right_button)
-    end
-end
-
-function ShopChannel:drawButton()
-    for index, obj in pairs(self.preview_list) do
-        self.buttons[index] = ModButton(110, 115 + ((index - 1) * 130) - Utils.round(self.offset), index)
-        self.screen_helper:addChild(self.buttons[index])
     end
 end
 
