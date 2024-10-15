@@ -20,17 +20,23 @@ function ShopChannel:init()
 
     self.state = "MAIN" -- MAIN, SEARCH, GAME 
 
-    self.page = 1
+    self.current_page = 1
+
+    local code, pages = https.request("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803")
+
+    self.request_code = code
+
+    if self.request_code == 200 then
+        pages = JSON.decode(pages)
+        pages = math.ceil(#pages / 2)
+        self.pages = pages
+    else
+        self.error = true
+    end
 
     self.mod = 1
 
     self.is_loading = false
-
-    local _, body, _ = https.request("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.page)
-
-    body = JSON.decode(body)
-
-    self.mod_list = body
 
     self.preview_list = {}
 
@@ -56,6 +62,17 @@ function ShopChannel:enter()
 	self.cooldown = 0
 	
 	self.clickable = true
+
+    if self.error then
+        self.popUp = popUp("Error", {"OK"}, function(clicked) 
+            if Game.musicplay then
+                Game.musicplay:remove()
+                Game.musicplay = nil
+            end
+            Mod:setState("MainMenu", false)
+        end)
+		self.screen_helper_upper:addChild(self.popUp)
+    end
 end
 
 function ShopChannel:update()
@@ -69,6 +86,9 @@ function ShopChannel:update()
 
     if self.state == "MAIN" then
         if Input.pressed("confirm") then
+            if not self.mod_list then
+                self:changePage(0)
+            end
             self:setPreview()
             self:drawButton()
             self.offset = 0
@@ -101,6 +121,10 @@ function ShopChannel:update()
     Kristal.showCursor()
 end
 
+function ShopChannel:onWheelMoved(x, y)
+    self.offset = Utils.clamp(self.offset - y * 10, 0, 101 * #self.mod_list)
+end
+
 function ShopChannel:setPreview()
     self.preview_list = {}
     for index, obj in pairs(self.mod_list) do
@@ -127,11 +151,13 @@ end
 function ShopChannel:changePage(page_num)
     self.offset = 0
 
-    self.page = self.page + (page_num or 0)
+    self.current_page = self.current_page + (page_num or 0)
 
-    self.page = Utils.clamp(self.page, 1, 3)
+    self.current_page = Utils.clamp(self.current_page, 1, self.pages)
 
-    local _, body, _ = https.request("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.page)
+    local code, body, _ = https.request("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
+
+    self.request_code = code
 
     body = JSON.decode(body)
 
@@ -187,6 +213,9 @@ function ShopChannel:draw()
         love.graphics.print("You're in Main Menu", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT/2 - 10)
     elseif self.state == "SEARCH" then
         Draw.rectangle("line", 105, 85, SCREEN_WIDTH/2 + 110, SCREEN_HEIGHT/2 + 80)
+
+        love.graphics.print(self.current_page.."/"..self.pages, SCREEN_WIDTH/2 + 125, SCREEN_HEIGHT - 75)
+        
         Draw.pushScissor()
         -- Mod List
         Draw.scissor(106, 86, SCREEN_WIDTH/2 + 108, SCREEN_HEIGHT/2 + 78)
