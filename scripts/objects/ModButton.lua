@@ -16,6 +16,7 @@ function ModButton:onClick()
 	Game.wii_menu.mod = self.id
 	Game.wii_menu:changeMod()
 	Game.wii_menu:removeButton()
+	Game.wii_menu:removePageButton()
 	Game.wii_menu.state = "GAME"
 end
 

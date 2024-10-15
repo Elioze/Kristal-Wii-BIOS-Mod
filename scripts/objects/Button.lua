@@ -1,6 +1,6 @@
 local Button, super = Class(Object)
 
-function Button:init(x, y, image)
+function Button:init(x, y, image, callback)
 	super:init(self, x, y, 0, 0)
 	
 	if image then
@@ -16,6 +16,10 @@ function Button:init(x, y, image)
 		
 		self.width = self.sprite.width
 		self.height = self.sprite.height
+	end
+
+	if callback then
+		self.callback = callback
 	end
 
 	self.played_sound = false
@@ -64,6 +68,10 @@ function Button:onClick()
 	self.flash = FlashFade(self.sprite.texture, 0, 0)
     self.flash.layer = self.layer+10 -- TODO: Unhardcode?
     self.sprite:addChild(self.flash)
+
+	if self.callback and self.pressed then
+		self.callback()
+	end
 end
 
 function Button:canClick() return not Mod.popup_on end

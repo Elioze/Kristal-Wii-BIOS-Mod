@@ -42,6 +42,8 @@ function ShopChannel:init()
 
     Kristal.showCursor()
 
+    --self:pageButton()
+
     --self:changeMod()
 end
 
@@ -86,9 +88,7 @@ function ShopChannel:update()
 
     if self.state == "MAIN" then
         if Input.pressed("confirm") then
-            if not self.mod_list then
-                self:changePage(0)
-            end
+            self:changePage()
             self:setPreview()
             self:drawButton()
             self.offset = 0
@@ -102,8 +102,8 @@ function ShopChannel:update()
             Mod:setState("MainMenu", false)
         end
     elseif self.state == "SEARCH" then
-        if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() end
-        if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() end
+        if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() self:removePageButton() end
+        if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() self:removePageButton() end
 
         if Input.keyDown("down") then self.offset = self.offset + DT * 90 end
         if Input.keyDown("up") then self.offset = self.offset - DT * 90 end
@@ -115,7 +115,7 @@ function ShopChannel:update()
     elseif self.state == "GAME" then
         if Input.pressed("left") then self:changeMod(-1) end
         if Input.pressed("right") then self:changeMod(1) end
-        if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() end
+        if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() self:changePage() end
     end
 
     Kristal.showCursor()
@@ -164,6 +164,10 @@ function ShopChannel:changePage(page_num)
     self.mod_list = body
 
     self:setPreview()
+
+    self:removePageButton()
+
+    self:pageButton() 
 end
 
 function ShopChannel:removeButton()
@@ -171,6 +175,23 @@ function ShopChannel:removeButton()
         obj:remove()
     end
     self.buttons = {}
+end
+
+function ShopChannel:removePageButton()
+    if self.left_button then self.left_button:remove() end
+    if self.right_button then self.right_button:remove() end
+end
+
+function ShopChannel:pageButton()
+    if self.current_page ~= 1 then
+        self.left_button = Button(SCREEN_WIDTH/2 + 95, SCREEN_HEIGHT - 45, "left", function() Game.wii_menu:changePage(-1) print("left", self.left_button.pressed) end)
+        self.screen_helper:addChild(self.left_button)
+    end
+
+    if self.current_page ~= self.pages then
+        self.right_button = Button(SCREEN_WIDTH/2 + 195, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) print("right", self.right_button.pressed) end)
+        self.screen_helper:addChild(self.right_button)
+    end
 end
 
 function ShopChannel:drawButton()
@@ -240,7 +261,7 @@ function ShopChannel:draw()
             -- Mod Info
             love.graphics.print(obj["mod_name"], SCREEN_WIDTH/2 - 80, 115 + ((index - 1) * 130) - Utils.round(self.offset), 0, x_scale, 1)
             love.graphics.print(obj["dev_name"], SCREEN_WIDTH/2 - 80, 170 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.75, 0.75)
-            love.graphics.print("Kristal", SCREEN_WIDTH/2 - 80, 195 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.5, 0.5)
+            love.graphics.print(love.system.getOS(), SCREEN_WIDTH/2 - 80, 195 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.5, 0.5)
             Draw.setColor(1, 1, 1)
             Draw.draw(obj["preview"], 115, 120 + ((index - 1) * 130) - Utils.round(self.offset), 0, 120/obj["preview"]:getWidth(), 90/obj["preview"]:getHeight())
         end
@@ -250,13 +271,19 @@ function ShopChannel:draw()
         Draw.setColor(1, 1, 1)
         Draw.draw(self.preview, SCREEN_WIDTH/2 - 450/2 + 6, 110 + 8, 0, 160/self.preview:getWidth(), 120/self.preview:getHeight())
         Draw.setColor(0, 0, 0)
+        Draw.rectangle("fill", SCREEN_WIDTH/2 - 450/2 - 1, 82, 200, 28)
         Draw.rectangle("line", SCREEN_WIDTH/2 - 450/2, 110, 450, 220)
+        love.graphics.line(SCREEN_WIDTH/2 - 450/2 + 16, 250, 540 - 16, 250)
+        Draw.setColor(1, 1, 1)
+        love.graphics.print(love.system.getOS(), SCREEN_WIDTH/2 - 450/2 + 3, 84, 0, 0.5, 0.75)
+        Draw.setColor(0, 0, 0)
         love.graphics.print("Released "..self.date, 264, 184, 0, 0.5, 0.75)
+        love.graphics.print("For 1 player", 444, 185, 0, 0.5, 0.75)
         love.graphics.print(self.dev_name, 264, 184 + 18, 0, 0.5, 0.75)
         love.graphics.print("Fangame", 264, 184 + 18 + 20, 0, 0.5, 0.75)
         Draw.setColor(0, 0, 1)
         local mod_name_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth(self.mod_name)*0.75)/2
-        love.graphics.print(self.mod_name, mod_name_x, 269, 0, 0.75, 0.75)
+        love.graphics.print(self.mod_name, mod_name_x, 259, 0, 0.75, 0.75)
     end
 
     self.screen_helper:draw()
