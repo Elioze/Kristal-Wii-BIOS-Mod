@@ -18,7 +18,7 @@ function ShopChannel:init()
 
     self.bg = Assets.getTexture("vii_channel/bg")
 
-    self.state = "GAME" -- MAIN, SEARCH, GAME 
+    self.state = "MAIN" -- MAIN, SEARCH, GAME 
 
     self.page = 1
 
@@ -36,7 +36,7 @@ function ShopChannel:init()
 
     Kristal.showCursor()
 
-    self:changeMod()
+    --self:changeMod()
 end
 
 function ShopChannel:enter()
@@ -200,11 +200,16 @@ function ShopChannel:draw()
         for index, obj in pairs(self.preview_list) do
             Draw.setColor(0, 0, 0)
 
+            local x_scale = 1
+            if Assets.getFont("main"):getWidth(obj["mod_name"]) > 230 then
+                x_scale = 230/Assets.getFont("main"):getWidth(obj["mod_name"])
+            end
+
             if self.buttons[index] then
                 self.buttons[index].y = Utils.round((115 + ((index - 1) * 130) - Utils.round(self.offset)))
             end
             -- Mod Info
-            love.graphics.print(obj["mod_name"], SCREEN_WIDTH/2 - 80, 115 + ((index - 1) * 130) - Utils.round(self.offset))
+            love.graphics.print(obj["mod_name"], SCREEN_WIDTH/2 - 80, 115 + ((index - 1) * 130) - Utils.round(self.offset), 0, x_scale, 1)
             love.graphics.print(obj["dev_name"], SCREEN_WIDTH/2 - 80, 170 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.75, 0.75)
             love.graphics.print("Kristal", SCREEN_WIDTH/2 - 80, 195 + ((index - 1) * 130) - Utils.round(self.offset), 0, 0.5, 0.5)
             Draw.setColor(1, 1, 1)
@@ -221,7 +226,8 @@ function ShopChannel:draw()
         love.graphics.print(self.dev_name, 264, 184 + 18, 0, 0.5, 0.75)
         love.graphics.print("Fangame", 264, 184 + 18 + 20, 0, 0.5, 0.75)
         Draw.setColor(0, 0, 1)
-        love.graphics.print(self.mod_name, 262, 269, 0, 0.75, 0.75)
+        local mod_name_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth(self.mod_name)*0.75)/2
+        love.graphics.print(self.mod_name, mod_name_x, 269, 0, 0.75, 0.75)
     end
 
     self.screen_helper:draw()
