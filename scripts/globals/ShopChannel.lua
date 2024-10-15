@@ -36,10 +36,6 @@ function ShopChannel:init()
 
     Kristal.showCursor()
 
-    self:drawButton()
-
-    self:initButtons()
-
     self:setPreview()
 end
 
@@ -53,6 +49,8 @@ function ShopChannel:enter()
 	end
 	
 	Kristal.showCursor()
+    
+    self:drawButton()
 	
 	self.cooldown = 0
 	
@@ -78,30 +76,24 @@ function ShopChannel:update()
             Mod:setState("MainMenu", false)
         end
     elseif self.state == "SEARCH" then
-        if Input.pressed("cancel") then self.state = "MAIN" end
-        if Input.pressed("confirm") then self.state = "GAME" self:changeMod(0) end
+        if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() end
+        if Input.pressed("confirm") then self.state = "GAME" self:changeMod(0) self:removeButton() end
 
         if Input.keyDown("down") then self.offset = self.offset + DT * 90 end
         if Input.keyDown("up") then self.offset = self.offset - DT * 90 end
         self.offset = Utils.clamp(self.offset, 0, 101 * #self.mod_list)
 
-        if Input.keyDown("left") then self:changePage(-1) end
-        if Input.keyDown("right") then self:changePage(1) end
+        if Input.keyDown("left") then self:changePage(-1) self:removeButton() self:drawButton() end
+        if Input.keyDown("right") then self:changePage(1) self:removeButton() self:drawButton() end
 
 
     elseif self.state == "GAME" then
         if Input.pressed("left") then self:changeMod(-1) end
         if Input.pressed("right") then self:changeMod(1) end
-        if Input.pressed("cancel") then self.state = "SEARCH" end
+        if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() end
     end
 
     Kristal.showCursor()
-end
-
-function ShopChannel:initButtons()
-    --self.modbutton = Button(106, 86, "blank_button")
-    --table.insert(self.buttons, self.modbutton)
-	--self.screen_helper:addChild(self.modbutton)
 end
 
 function ShopChannel:setPreview()
@@ -130,7 +122,7 @@ end
 function ShopChannel:changePage(page_num)
     self.offset = 0
 
-    self.page = self.page + page_num
+    self.page = self.page + (page_num or 0)
 
     self.page = Utils.clamp(self.page, 1, 3)
 
@@ -143,6 +135,13 @@ function ShopChannel:changePage(page_num)
     self:setPreview()
 end
 
+function ShopChannel:removeButton()
+    for index, obj in pairs(self.buttons) do
+        obj:remove()
+    end
+    self.buttons = {}
+end
+
 function ShopChannel:drawButton()
     for index, obj in pairs(self.preview_list) do
         self.buttons[index] = ModButton(110, 115 + ((index - 1) * 130) - Utils.round(self.offset), index)
@@ -151,7 +150,7 @@ function ShopChannel:drawButton()
 end
 
 function ShopChannel:changeMod(mod_num)
-    self.mod = self.mod + mod_num
+    self.mod = self.mod + (mod_num or 0)
     self.mod = Utils.clamp(self.mod, 1, 10)
 
     self.mod_name = self.mod_list[self.mod]["_sName"]

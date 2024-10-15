@@ -14,7 +14,8 @@ end
 function ModButton:onClick()
 	Assets.playSound("wii/button_pressed")
 	Game.wii_menu.mod = self.id
-	Game.wii_menu:changeMod(0)
+	Game.wii_menu:changeMod()
+	Game.wii_menu:removeButton()
 	Game.wii_menu.state = "GAME"
 end
 
@@ -23,9 +24,12 @@ function ModButton:update()
 	
 	local mx, my = love.mouse.getPosition()
 	local screen_x, screen_y = self:getScreenPos()
+	print(self.id, self:getScreenPos())
 	screen_x, screen_y = screen_x-self.width/2, screen_y-self.height/2
 	if not self.pressed then
-		if (mx / Kristal.getGameScale() > screen_x) and (mx / Kristal.getGameScale() < (screen_x + self.width)) and (my / Kristal.getGameScale() > screen_y) and (my / Kristal.getGameScale() < (screen_y + self.height)) and self:canHover() then
+		if (mx / Kristal.getGameScale() > screen_x) and (mx / Kristal.getGameScale() < (screen_x + self.width)) 
+		and (my / Kristal.getGameScale() > screen_y) and (my / Kristal.getGameScale() < (screen_y + self.height)) 
+		and self:canHover() then
 			self.hover = true
 			if self:canClick() then
 				if not self.played_sound then
@@ -50,6 +54,9 @@ end
 
 function ModButton:draw()
 	super:draw(self)
+
+	local screen_x, screen_y = self:getScreenPos()
+
 	if self.hover then
 		Draw.setColor(0, 0, 1)
 	else
