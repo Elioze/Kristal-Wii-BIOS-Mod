@@ -83,7 +83,9 @@ function ModButton:draw()
 	Draw.rectangle("line", 0, 0, self.width, self.height)
 end
 
-function ModButton:canClick() return not Mod.popup_on end
+function ModButton:canClick()
+	if Game.wii_menu.btn_cooldown then return Game.wii_menu.btn_cooldown <= 0 end
+	return not Mod.popup_on end
 function ModButton:canHover() return true end
 
 return ModButton

@@ -68,13 +68,16 @@ function Button:onClick()
 	self.flash = FlashFade(self.sprite.texture, 0, 0)
     self.flash.layer = self.layer+10 -- TODO: Unhardcode?
     self.sprite:addChild(self.flash)
+	if Game.wii_menu.btn_cooldown then Game.wii_menu.btn_cooldown = 0.5 end
 
-	if self.callback and self.pressed then
+	if self.callback then
 		self.callback()
 	end
 end
 
-function Button:canClick() return not Mod.popup_on end
+function Button:canClick() 
+	if Game.wii_menu.btn_cooldown then return Game.wii_menu.btn_cooldown <= 0 end
+	return not Mod.popup_on end
 function Button:canHover() return true end
 
 return Button

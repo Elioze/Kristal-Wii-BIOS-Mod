@@ -62,6 +62,8 @@ function ShopChannel:enter()
     --self:drawButton()
 	
 	self.cooldown = 0
+
+    self.btn_cooldown = 0
 	
 	self.clickable = true
 
@@ -71,12 +73,23 @@ function ShopChannel:enter()
                 Game.musicplay:remove()
                 Game.musicplay = nil
             end
+            Game.wii_menu.popUp:remove()
             Mod:setState("MainMenu", false)
         end)
 		self.screen_helper_upper:addChild(self.popUp)
     end
 
-    self.back_button = TextButtonInApp(120, 400, "Wii Menu", function ()
+    self.access_btn = Button(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+        self:changePage()
+        self:setPreview()
+        self:drawButton()
+        self:removeMainButton()
+        self.offset = 0
+        Game.wii_menu.state = "SEARCH"
+    end)
+    self.screen_helper:addChild(self.access_btn)
+
+    self.back_button = TextButtonInApp(140, 440, "Wii Menu", function ()
         if Game.wii_menu.state == "MAIN" then
             if Game.musicplay then
                 Game.musicplay:remove()
@@ -87,18 +100,23 @@ function ShopChannel:enter()
             Game.wii_menu.state = "MAIN"
             self:removeButton()
             self:removePageButton()
+            self:drawMainButton()
         else
             self.state = "SEARCH"
             self:drawButton()
             self:changePage()
         end
     end)
+    print(Game.wii_menu.back_button.pressed)
     self.screen_helper:addChild(self.back_button)
 end
 
 function ShopChannel:update()
     self.screen_helper:update()
     self.screen_helper_upper:update()
+
+    if Game.wii_menu.cooldown and Game.wii_menu.cooldown > 0 then Game.wii_menu.cooldown = Game.wii_menu.cooldown - DT end
+    if Game.wii_menu.btn_cooldown and Game.wii_menu.btn_cooldown > 0 then Game.wii_menu.btn_cooldown = Game.wii_menu.btn_cooldown - DT end
 
     if not Game.musicplay:isPlaying() then
         Game.musicplay = Music("shop")
@@ -212,14 +230,33 @@ end
 
 function ShopChannel:pageButton()
     if self.current_page ~= 1 then
-        self.left_button = Button(SCREEN_WIDTH/2 + 95, SCREEN_HEIGHT - 45, "left", function() Game.wii_menu:changePage(-1) print("left", self.left_button.pressed) end)
+        self.left_button = Button(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function() Game.wii_menu:changePage(-1) self:removeButton() self:drawButton() end)
+        self.left_button.sprite:setScale(40/self.left_button.sprite.width, 40/self.left_button.sprite.height)
         self.screen_helper:addChild(self.left_button)
     end
 
     if self.current_page ~= self.pages then
-        self.right_button = Button(SCREEN_WIDTH/2 + 195, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) print("right", self.right_button.pressed) end)
+        self.right_button = Button(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) self:removeButton() self:drawButton() end)
+        self.right_button.sprite:setScale(40/self.right_button.sprite.width, 40/self.right_button.sprite.height)
+        --self.right_button.sprite:setScale(80/self.right_button.sprite.width, 80/self.right_button.sprite.height)
         self.screen_helper:addChild(self.right_button)
     end
+end
+
+function ShopChannel:removeMainButton()
+    if self.access_btn then self.access_btn:remove() end
+end
+
+function ShopChannel:drawMainButton()
+    self.access_btn = Button(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+        self:changePage()
+        self:setPreview()
+        self:drawButton()
+        self:removeMainButton()
+        self.offset = 0
+        Game.wii_menu.state = "SEARCH"
+    end)
+    self.screen_helper:addChild(self.access_btn)
 end
 
 function ShopChannel:changeMod(mod_num)
