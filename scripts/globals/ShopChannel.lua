@@ -157,6 +157,20 @@ function ShopChannel:update()
         if Input.pressed("left") then self:changeMod(-1) end
         if Input.pressed("right") then self:changeMod(1) end
         --if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() self:changePage() end
+
+        if Input.pressed("confirm") then 
+            if not(string.find(self.mod_list[self.mod]["_aFiles"][1]["_sFile"], ".love")) or not(self.mod_list[self.mod]["_aFiles"][1]["_bContainsExe"]) then
+                local code, file = https.request(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
+
+                if code == 200 then
+                    local game = love.filesystem.newFile("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "w")
+                    game:write(file)
+                    game:close()
+                end
+            else
+                print("exe")
+            end
+        end
     end
 
     Kristal.showCursor()
