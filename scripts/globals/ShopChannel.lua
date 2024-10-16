@@ -87,6 +87,7 @@ function ShopChannel:enter()
 
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
         self.is_loading = true
+        self.loading_rotation = 1
         self.loading_sound:play()
         self.timer:after(0.1, function()
             self.current_page = 1
@@ -116,6 +117,7 @@ function ShopChannel:enter()
             self:drawMainButton()
         else
             self.is_loading = true
+            self.loading_rotation = 1
             self.loading_sound:play()
             self.timer:after(0.1, function ()
                 self.state = "SEARCH"
@@ -290,6 +292,7 @@ function ShopChannel:pageButton()
     if self.current_page ~= 1 then
         self.left_button = ShopButton(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function()
             self.is_loading = true
+            self.loading_rotation = 1
             self.loading_sound:play()
             self.timer:after(0.1, function ()
                 self.is_loading = false
@@ -307,6 +310,7 @@ function ShopChannel:pageButton()
     if self.current_page ~= self.pages then
         self.right_button = ShopButton(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() 
             self.is_loading = true
+            self.loading_rotation = 1
             self.loading_sound:play()
             self.timer:after(0.1, function ()
                 self.is_loading = false
@@ -329,6 +333,7 @@ end
 function ShopChannel:drawMainButton()
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
         self.is_loading = true
+        self.loading_rotation = 1
         self.loading_sound:play()
         self.timer:after(0.1, function()
             self.current_page = 1
@@ -372,7 +377,7 @@ function ShopChannel:draw()
     Draw.setColor(1, 1, 1)
     if self.is_loading then
         --love.graphics.print("LOADING", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT - 50)
-        Draw.draw(Assets.getTexture("shop/loading"), 20 + Assets.getTexture("shop/loading"):getWidth()/2, 10 + Assets.getTexture("shop/loading"):getHeight()/2, self.loading_rotation, 1, 1 , Assets.getTexture("shop/loading"):getWidth()/2, Assets.getTexture("shop/loading"):getHeight()/2)
+        Draw.draw(Assets.getTexture("shop/loading"), 20 + Assets.getTexture("shop/loading"):getWidth()/2, 10 + Assets.getTexture("shop/loading"):getHeight()/2, self.loading_rotation, 1, 1, Assets.getTexture("shop/loading"):getWidth()/2, Assets.getTexture("shop/loading"):getHeight()/2)
     end
     Draw.setColor(0, 0, 0)
     if self.state == "MAIN" then

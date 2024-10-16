@@ -14,6 +14,7 @@ end
 function ModButton:onClick()
 	Assets.playSound("wii/button_pressed")
 	Game.wii_menu.is_loading = true
+	Game.wii_menu.loading_rotation = 1
 	Game.wii_menu.loading_sound:play()
 	Game.wii_menu.timer:after(0.5, function ()
 		Game.wii_menu.mod = self.id
