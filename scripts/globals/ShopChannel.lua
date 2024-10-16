@@ -149,38 +149,14 @@ function ShopChannel:update(dt)
 
     if self.state == "MAIN" then
         self.back_button.text = "Wii Menu"
-        --[[if Input.pressed("confirm") then
-            self:changePage()
-            self:setPreview()
-            self:drawButton()
-            self.offset = 0
-            self.state = "SEARCH"
-        end
-        if Input.pressed("cancel") then 
-            if Game.musicplay then
-                Game.musicplay:remove()
-                Game.musicplay = nil
-            end
-            Mod:setState("MainMenu", false)
-        end]]
     elseif self.state == "SEARCH" then
         self.back_button.text = "Back"
-
-        --[[if Input.keyDown("down") then self.offset = self.offset + DT * 90 end
-        if Input.keyDown("up") then self.offset = self.offset - DT * 90 end
-        self.offset = Utils.clamp(self.offset, 0, 101 * #self.mod_list)
-
-        if Input.pressed("cancel") then self.state = "MAIN" self:removeButton() self:removePageButton() end
-        if Input.pressed("confirm") then self.state = "GAME" self:changeMod() self:removeButton() self:removePageButton() end
-
-        if Input.keyDown("left") then self:changePage(-1) self:removeButton() self:drawButton() end
-        if Input.keyDown("right") then self:changePage(1) self:removeButton() self:drawButton() end]]
-
     elseif self.state == "GAME" then
+        -- Debug
         if Input.pressed("left") then self:changeMod(-1) end
         if Input.pressed("right") then self:changeMod(1) end
-        --if Input.pressed("cancel") then self.state = "SEARCH" self:drawButton() self:changePage() end
-
+        
+        -- Normal
         if Input.pressed("confirm") then 
             if not(string.find(self.mod_list[self.mod]["_aFiles"][1]["_sFile"], ".love")) or not(self.mod_list[self.mod]["_aFiles"][1]["_bContainsExe"]) then
                 local code, file = https.request(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
@@ -195,6 +171,9 @@ function ShopChannel:update(dt)
             end
         end
     elseif self.state == "DOWNLOAD" then
+        if Input.pressed("cancel") then
+            
+        end
         --if not self.is_downloading and self.btn_cooldown <= 0 then self:download() end
     end
 
@@ -349,13 +328,19 @@ end
 
 function ShopChannel:drawMainButton()
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
-        self.current_page = 1
-        self:changePage()
-        self:setPreview()
-        self:drawButton()
-        self:removeMainButton()
-        self.offset = 0
-        Game.wii_menu.state = "SEARCH"
+        self.is_loading = true
+        self.loading_sound:play()
+        self.timer:after(0.1, function()
+            self.current_page = 1
+            self:changePage()
+            self:setPreview()
+            self:drawButton()
+            self:removeMainButton()
+            self.offset = 0
+            Game.wii_menu.state = "SEARCH"
+            self.is_loading = false
+            self.loading_sound:stop()
+        end)
     end)
     self.screen_helper:addChild(self.access_btn)
 end
@@ -387,7 +372,7 @@ function ShopChannel:draw()
     Draw.setColor(1, 1, 1)
     if self.is_loading then
         --love.graphics.print("LOADING", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT - 50)
-        Draw.draw(Assets.getTexture("shop/loading"), 20, 10, self.loading_rotation)
+        Draw.draw(Assets.getTexture("shop/loading"), 20 + Assets.getTexture("shop/loading"):getWidth()/2, 10 + Assets.getTexture("shop/loading"):getHeight()/2, self.loading_rotation, 1, 1 , Assets.getTexture("shop/loading"):getWidth()/2, Assets.getTexture("shop/loading"):getHeight()/2)
     end
     Draw.setColor(0, 0, 0)
     if self.state == "MAIN" then
