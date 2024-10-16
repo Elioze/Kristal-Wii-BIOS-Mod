@@ -17,6 +17,8 @@ function ModButton:onClick()
 	Game.wii_menu:changeMod()
 	Game.wii_menu:removeButton()
 	Game.wii_menu:removePageButton()
+	Game.wii_menu:drawDownloadButton()
+	Game.wii_menu.btn_cooldown = 0.5
 	Game.wii_menu.state = "GAME"
 end
 
@@ -83,9 +85,7 @@ function ModButton:draw()
 	Draw.rectangle("line", 0, 0, self.width, self.height)
 end
 
-function ModButton:canClick()
-	if Game.wii_menu.btn_cooldown then return Game.wii_menu.btn_cooldown <= 0 end
-	return not Mod.popup_on end
+function ModButton:canClick() return Game.wii_menu.btn_cooldown <= 0 end
 function ModButton:canHover() return true end
 
 return ModButton

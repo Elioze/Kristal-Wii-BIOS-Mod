@@ -18,7 +18,7 @@ function ShopChannel:init()
 
     self.bg = Assets.getTexture("vii_channel/bg")
 
-    self.state = "MAIN" -- MAIN, SEARCH, GAME 
+    self.state = "MAIN" -- MAIN, SEARCH, GAME, DOWNLOAD
 
     self.current_page = 1
 
@@ -79,7 +79,7 @@ function ShopChannel:enter()
 		self.screen_helper_upper:addChild(self.popUp)
     end
 
-    self.access_btn = Button(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+    self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
         self.current_page = 1
         self:changePage()
         self:setPreview()
@@ -106,9 +106,10 @@ function ShopChannel:enter()
             self.state = "SEARCH"
             self:drawButton()
             self:changePage()
+            self:removeDownloadButton()
         end
     end)
-    print(Game.wii_menu.back_button.pressed)
+
     self.screen_helper:addChild(self.back_button)
 end
 
@@ -171,13 +172,54 @@ function ShopChannel:update()
                 print("exe")
             end
         end
+    elseif self.state == "DOWNLOAD" then
+        local dl_anim = DownloadCutscene(1, function ()
+            self:download()
+            dl_anim:remove()
+        end)
+        self.screen_helper:addChild(dl_anim)
+        --if not self.is_downloading and self.btn_cooldown <= 0 then self:download() end
     end
 
     Kristal.showCursor()
 end
 
+function ShopChannel:download()
+    self.is_downloading = true
+
+    local code, file = https.request(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
+
+    if code == 200 then
+        local game = love.filesystem.newFile("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "w")
+        game:write(file)
+        game:close()
+        self.state = "SEARCH"
+        self:drawButton()
+        self:changePage()
+        self:removeDownloadButton()
+        self.is_downloading = false
+    else
+        local fail_popup = popUp("Download Failed", {"OK"})
+        self.screen_helper:addChild(fail_popup)
+    end
+end
+
+function ShopChannel:drawDownloadButton()
+    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 100, "settings", function()
+        self:removeDownloadButton()
+        self.state = "DOWNLOAD"
+    end)
+    self.screen_helper:addChild(self.download_button)
+end
+
+function ShopChannel:removeDownloadButton()
+    if self.download_button then self.download_button:remove() end
+end
+
 function ShopChannel:onWheelMoved(x, y)
-    self.offset = Utils.clamp(self.offset - y * 10, 0, 101 * #self.mod_list)
+    if self.state == "SEARCH" then
+        self.offset = Utils.clamp(self.offset - y * 10, 0, 101 * #self.mod_list)
+    end
 end
 
 function ShopChannel:setPreview()
@@ -246,13 +288,13 @@ end
 
 function ShopChannel:pageButton()
     if self.current_page ~= 1 then
-        self.left_button = Button(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function() Game.wii_menu:changePage(-1) self:removeButton() self:drawButton() end)
+        self.left_button = ShopButton(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function() Game.wii_menu:changePage(-1) self:removeButton() self:drawButton() end)
         self.left_button.sprite:setScale(40/self.left_button.sprite.width, 40/self.left_button.sprite.height)
         self.screen_helper:addChild(self.left_button)
     end
 
     if self.current_page ~= self.pages then
-        self.right_button = Button(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) self:removeButton() self:drawButton() end)
+        self.right_button = ShopButton(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) self:removeButton() self:drawButton() end)
         self.right_button.sprite:setScale(40/self.right_button.sprite.width, 40/self.right_button.sprite.height)
         self.screen_helper:addChild(self.right_button)
     end
@@ -263,7 +305,7 @@ function ShopChannel:removeMainButton()
 end
 
 function ShopChannel:drawMainButton()
-    self.access_btn = Button(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+    self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
         self.current_page = 1
         self:changePage()
         self:setPreview()
@@ -305,7 +347,8 @@ function ShopChannel:draw()
         love.graphics.print("LOADING", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT - 50)
     end
     if self.state == "MAIN" then
-        love.graphics.print("You're in Main Menu", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT/2 - 10)
+        local lol_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth("You're in Main Menu"))/2
+        love.graphics.print("You're in Main Menu", lol_x, SCREEN_HEIGHT/2 - 10)
     elseif self.state == "SEARCH" then
         Draw.rectangle("line", 105, 85, SCREEN_WIDTH/2 + 110, SCREEN_HEIGHT/2 + 80)
 

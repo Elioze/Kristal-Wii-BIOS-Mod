@@ -1,6 +1,6 @@
-local Button, super = Class(Object)
+local ShopButton, super = Class("Button")
 
-function Button:init(x, y, image)
+function ShopButton:init(x, y, image, callback)
 	super:init(self, x, y, 0, 0)
 	
 	if image then
@@ -18,10 +18,14 @@ function Button:init(x, y, image)
 		self.height = self.sprite.height
 	end
 
+	if callback then
+		self.callback = callback
+	end
+
 	self.played_sound = false
 end
 
-function Button:update() 
+function ShopButton:update() 
 	super.update(self)
 
 	local mx, my = love.mouse.getPosition()
@@ -57,16 +61,21 @@ function Button:update()
 	end
 end
 
-function Button:draw() super:draw(self) end
+function ShopButton:draw() super:draw(self) end
 
-function Button:onClick()
+function ShopButton:onClick()
 	Assets.playSound("wii/button_pressed")
 	self.flash = FlashFade(self.sprite.texture, 0, 0)
     self.flash.layer = self.layer+10 -- TODO: Unhardcode?
     self.sprite:addChild(self.flash)
+	Game.wii_menu.btn_cooldown = 0.5
+
+	if self.callback then
+		self.callback()
+	end
 end
 
-function Button:canClick() return not Mod.popup_on end
-function Button:canHover() return true end
+function ShopButton:canClick() return Game.wii_menu.btn_cooldown <= 0 end
+function ShopButton:canHover() return true end
 
-return Button
+return ShopButton
