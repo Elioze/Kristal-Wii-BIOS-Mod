@@ -8,6 +8,8 @@ function ShopChannel:init()
 
     self.stage = Stage()
 
+    self.timer = LibTimer.new()
+
     self.screen_helper = ScreenHelper()
 	self.stage:addChild(self.screen_helper)
 
@@ -37,6 +39,10 @@ function ShopChannel:init()
     self.mod = 1
 
     self.is_loading = false
+    self.loading_sound = Assets.playSound("wii/loading")
+    self.loading_sound:setLooping(true)
+    self.loading_sound:stop()
+    self.loading_rotation = 0
 
     self.preview_list = {}
 
@@ -80,13 +86,19 @@ function ShopChannel:enter()
     end
 
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
-        self.current_page = 1
-        self:changePage()
-        self:setPreview()
-        self:drawButton()
-        self:removeMainButton()
-        self.offset = 0
-        Game.wii_menu.state = "SEARCH"
+        self.is_loading = true
+        self.loading_sound:play()
+        self.timer:after(0.1, function()
+            self.current_page = 1
+            self:changePage()
+            self:setPreview()
+            self:drawButton()
+            self:removeMainButton()
+            self.offset = 0
+            Game.wii_menu.state = "SEARCH"
+            self.is_loading = false
+            self.loading_sound:stop()
+        end)
     end)
     self.screen_helper:addChild(self.access_btn)
 
@@ -103,19 +115,29 @@ function ShopChannel:enter()
             self:removePageButton()
             self:drawMainButton()
         else
-            self.state = "SEARCH"
-            self:drawButton()
-            self:changePage()
-            self:removeDownloadButton()
+            self.is_loading = true
+            self.loading_sound:play()
+            self.timer:after(0.1, function ()
+                self.state = "SEARCH"
+                self:drawButton()
+                self:changePage()
+                self:removeDownloadButton()
+                self.is_loading = false
+                self.loading_sound:stop()
+            end)
         end
     end)
 
     self.screen_helper:addChild(self.back_button)
 end
 
-function ShopChannel:update()
+function ShopChannel:update(dt)
+    self.timer:update(dt)
+
     self.screen_helper:update()
     self.screen_helper_upper:update()
+
+    self.loading_rotation = self.loading_rotation + 1 * dt
 
     if Game.wii_menu.cooldown and Game.wii_menu.cooldown > 0 then Game.wii_menu.cooldown = Game.wii_menu.cooldown - DT end
     if Game.wii_menu.btn_cooldown and Game.wii_menu.btn_cooldown > 0 then Game.wii_menu.btn_cooldown = Game.wii_menu.btn_cooldown - DT end
@@ -173,11 +195,6 @@ function ShopChannel:update()
             end
         end
     elseif self.state == "DOWNLOAD" then
-        local dl_anim = DownloadCutscene(1, function ()
-            self:download()
-            dl_anim:remove()
-        end)
-        self.screen_helper:addChild(dl_anim)
         --if not self.is_downloading and self.btn_cooldown <= 0 then self:download() end
     end
 
@@ -206,8 +223,14 @@ end
 
 function ShopChannel:drawDownloadButton()
     self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 100, "settings", function()
+        self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
+        local dl_anim = DownloadCutscene(1, function ()
+            self:download()
+            dl_anim:remove()
+        end)
+        self.screen_helper:addChild(dl_anim)
     end)
     self.screen_helper:addChild(self.download_button)
 end
@@ -235,9 +258,7 @@ function ShopChannel:setPreview()
 
         self.preview_list[index]["dev_name"] = obj["_aSubmitter"]["_sName"]
 
-        self.is_loading = true
         local _, preview = https.request(obj["_aPreviewMedia"]["_aImages"][1]["_sBaseUrl"].."/"..obj["_aPreviewMedia"]["_aImages"][1]["_sFile"])
-        self.is_loading = false
         preview = love.filesystem.newFileData(preview, "preview.png")
         preview = love.graphics.newImage(preview)
 
@@ -288,13 +309,35 @@ end
 
 function ShopChannel:pageButton()
     if self.current_page ~= 1 then
-        self.left_button = ShopButton(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function() Game.wii_menu:changePage(-1) self:removeButton() self:drawButton() end)
+        self.left_button = ShopButton(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function()
+            self.is_loading = true
+            self.loading_sound:play()
+            self.timer:after(0.1, function ()
+                self.is_loading = false
+                self:changePage(-1)
+                self:removeButton()
+                self:drawButton()
+                self.is_loading = false
+                self.loading_sound:stop()
+                end)
+            end)
         self.left_button.sprite:setScale(40/self.left_button.sprite.width, 40/self.left_button.sprite.height)
         self.screen_helper:addChild(self.left_button)
     end
 
     if self.current_page ~= self.pages then
-        self.right_button = ShopButton(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() Game.wii_menu:changePage(1) self:removeButton() self:drawButton() end)
+        self.right_button = ShopButton(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() 
+            self.is_loading = true
+            self.loading_sound:play()
+            self.timer:after(0.1, function ()
+                self.is_loading = false
+                self:changePage(1)
+                self:removeButton()
+                self:drawButton()
+                self.is_loading = false
+                self.loading_sound:stop()
+                end)
+            end)
         self.right_button.sprite:setScale(40/self.right_button.sprite.width, 40/self.right_button.sprite.height)
         self.screen_helper:addChild(self.right_button)
     end
@@ -341,11 +384,12 @@ function ShopChannel:draw()
 
     Draw.draw(self.bg, 0, 0)
 
-    Draw.setColor(0, 0, 0)
+    Draw.setColor(1, 1, 1)
     if self.is_loading then
-        print("State loading")
-        love.graphics.print("LOADING", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT - 50)
+        --love.graphics.print("LOADING", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT - 50)
+        Draw.draw(Assets.getTexture("shop/loading"), 20, 10, self.loading_rotation)
     end
+    Draw.setColor(0, 0, 0)
     if self.state == "MAIN" then
         local lol_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth("You're in Main Menu"))/2
         love.graphics.print("You're in Main Menu", lol_x, SCREEN_HEIGHT/2 - 10)

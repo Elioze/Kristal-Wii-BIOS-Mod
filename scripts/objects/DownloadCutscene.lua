@@ -3,13 +3,11 @@ local DownloadCutscene, super = Class(Object)
 function DownloadCutscene:init(id, callback)
     super.init(self)
 
-    self.stage = Stage()
-
     self.callback = callback
 
     self.animations = {
         kris = {
-            ["spin"] = {"party/kris/dark/walk/down", 0.5, false, {{"party/kris/dark/walk/left", 0.5, false, {{"party/kris/dark/walk/up", 0.5, false, {{"party/kris/dark/walk/right", 0.5, false,{{"party/kris/dark/walk/down", 0.5, false}}}}}}}}},
+            ["spin"] = {"party/kris/dark/walk/down", 0.5, false, {{"party/kris/dark/walk/left", 0.5, false, {{"party/kris/dark/walk/up", 0.5, false, {{"party/kris/dark/walk/right", 0.5, false, {{"party/kris/dark/walk/down", 0.5, false}}}}}}}}},
             ["ball"] = {"party/kris/dark/ball", 0.5, true},
             ["pose"] = {"party/kris/dark/pose", 0.5, true}
         },
@@ -24,15 +22,14 @@ function DownloadCutscene:init(id, callback)
     }
 
     self.kris = Sprite()
-    self.kris:setAnimation(self.animations["kris"]["spin"])
     --self.susie = Sprite("party/susie/dark/susie_pose", SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height)
     --self.ralsei = Sprite("party/ralsei/dark/ralsei_pose", SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height)
-    --self.kris:play(2, true)
+
+    self.kris:set(self.animations["kris"]["spin"])
+    self.kris:play(0.1)
 end
 
 function DownloadCutscene:update()
-    super.update(self)
-
     self.kris:update()
 
     if self.anim_done and self.callback then
@@ -41,9 +38,7 @@ function DownloadCutscene:update()
 end
 
 function DownloadCutscene:draw()
-    Draw.draw(self.kris:getTexture(), SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height, 0, 2, 2)
-
-    super.draw(self)
+    Draw.draw(self.kris:getTexture(), 100, 100, 0, 2, 2)
 end
 
 return DownloadCutscene
