@@ -68,7 +68,7 @@ function DownloadCutscene:init(id, callback)
 
         for index, chara in pairs(self.characters) do
             self.timer:after(3, function()
-                self:charaSlideTo(index, chara, 50, SCREEN_HEIGHT/2-chara.height, 20, 0.1, self.animations[index]["ball"])
+                self:charaSlideTo(index, chara, chara.x, 50, 10, 0.1, self.animations[index]["ball"])
             end)
             --[[self.timer:every(1.5, function()
                 if chara.anim_sprite == self.animations[index]["walk_down"][1] then
@@ -95,7 +95,7 @@ function DownloadCutscene:init(id, callback)
 end
 
 function DownloadCutscene:charaSlideTo(id, chara, x, y, speed, anim_speed, anim)
-    speed = speed*2
+    speed = speed*5
     
     if anim then
         chara:set(anim)
@@ -117,7 +117,6 @@ function DownloadCutscene:charaSlideTo(id, chara, x, y, speed, anim_speed, anim)
         chara:play(anim_speed)
     end
     local timer_x = self.timer:every(0, function()
-        --print(chara.x - (speed * DT), x)
         if (chara.x - (speed * DT) < x and chara.x > x) or (chara.x + (speed * DT) > x and chara.x < x) then
             chara.x = x
         elseif chara.x > x then
