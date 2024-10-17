@@ -375,9 +375,14 @@ end
 
 function ShopChannel:draw()
 
+    local gradient = Assets.getTexture("shop/gradient")
+
     love.graphics.push()
 
-    Draw.draw(self.bg, 0, 0)
+    Draw.rectangle("fill", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+    Draw.draw(gradient, 0, 0, 0, 1, SCREEN_HEIGHT/gradient:getHeight())
+    Draw.draw(gradient, SCREEN_WIDTH, 0, 0, -1, SCREEN_HEIGHT/gradient:getHeight())
 
     Draw.setColor(1, 1, 1)
     if self.is_loading then
