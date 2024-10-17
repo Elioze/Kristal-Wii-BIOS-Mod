@@ -68,7 +68,7 @@ function DownloadCutscene:init(id, callback)
 
         for index, chara in pairs(self.characters) do
             self.timer:after(3, function()
-                self:charaSlideTo(index, chara, 50, 50, 12)
+                self:charaSlideTo(index, chara, 50, SCREEN_HEIGHT/2-chara.height, 20)
             end)
             --[[self.timer:every(1.5, function()
                 if chara.anim_sprite == self.animations[index]["walk_down"][1] then
@@ -101,9 +101,9 @@ function DownloadCutscene:charaSlideTo(id, chara, x, y, speed, anim)
         chara:set(anim)
     else
         if chara.x > x then
-            chara:set(self.animations[id]["walk_right"])
-        elseif chara.x < x then
             chara:set(self.animations[id]["walk_left"])
+        elseif chara.x < x then
+            chara:set(self.animations[id]["walk_right"])
         end
 
         if chara.y > y then
@@ -142,7 +142,7 @@ function DownloadCutscene:charaSlideTo(id, chara, x, y, speed, anim)
     end
 end
 
-function DownloadCutscene:charaSlideFor(id, chara, x, y, speed, anim)
+--[[function DownloadCutscene:charaSlideFor(id, chara, x, y, speed, anim)
     speed = speed*2
     
     if anim then
@@ -150,14 +150,14 @@ function DownloadCutscene:charaSlideFor(id, chara, x, y, speed, anim)
     else
         if 0 > x then
             chara:set(self.animations[id]["walk_left"])
-        else
+        elseif 0 > x then
             chara:set(self.animations[id]["walk_right"])
         end
 
         if 0 < y then
-            chara:set(self.animations[id]["walk_up"])
-        else
             chara:set(self.animations[id]["walk_down"])
+        elseif 0 > y then
+            chara:set(self.animations[id]["walk_up"])
         end
     end
     self.timer:every(0, function()
@@ -167,7 +167,7 @@ function DownloadCutscene:charaSlideFor(id, chara, x, y, speed, anim)
     self.timer:every(0, function()
         chara.y = chara.y + (speed * DT)
     end, math.abs((chara.y - y)/(speed * DT)))
-end
+end]]
 
 function DownloadCutscene:update(dt)
     self.timer:update(dt)
