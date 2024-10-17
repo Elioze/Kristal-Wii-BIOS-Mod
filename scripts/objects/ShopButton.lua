@@ -1,12 +1,14 @@
-local ShopButton, super = Class("Button")
+local ShopButton, super = Class(Object)
 
-function ShopButton:init(x, y, image, callback)
-	super:init(self, x, y, 0, 0)
+function ShopButton:init(x, y, image, callback, width, height)
+	super:init(self, x, y)
 	
+	image = "button"
+
 	if image then
-		self.path = "button/" .. image
-		if love.filesystem.getInfo(Kristal.Mods.getMod("wii_kristal").path .. "/assets/sprites/button/" .. Game.wii_data["theme"] .. "/" .. image .. ".png") then
-			self.path = "button/" .. Game.wii_data["theme"] .. "/" ..image
+		self.path = "shop/" .. image
+		if love.filesystem.getInfo(Kristal.Mods.getMod("wii_kristal").path .. "/assets/sprites/shop/" .. Game.wii_data["theme"] .. "/" .. image .. ".png") then
+			self.path = "shop/" .. Game.wii_data["theme"] .. "/" ..image
 		end
 		
 		self.sprite = Sprite(self.path)
@@ -22,6 +24,11 @@ function ShopButton:init(x, y, image, callback)
 		self.callback = callback
 	end
 
+	self.width = width or 1
+	self.height = height or 1
+
+	self.sprite:setScale(width/self.sprite.width, height/self.sprite.height)
+
 	self.played_sound = false
 end
 
@@ -34,10 +41,7 @@ function ShopButton:update()
 	if not self.pressed then
 		if (mx / Kristal.getGameScale() > screen_x) and (mx / Kristal.getGameScale() < (screen_x + self.width)) and (my / Kristal.getGameScale() > screen_y) and (my / Kristal.getGameScale() < (screen_y + self.height)) and self:canHover() then
 			if self:canClick() then
-				if self.scale_x < 1.15 then
-					self.scale_x = self.scale_x + 0.1*DTMULT
-					self.scale_y = self.scale_y + 0.1*DTMULT
-				end
+				self.sprite:setSprite(self.path.."_hover")
 				if not self.played_sound then
 					self.played_sound = true
 					Assets.playSound("wii/hover")
@@ -48,10 +52,7 @@ function ShopButton:update()
 				end
 			end
 		else
-			if self.scale_x > 1 then
-				self.scale_x = self.scale_x - 0.1*DTMULT
-				self.scale_y = self.scale_y - 0.1*DTMULT
-			end
+			self.sprite:setSprite(self.path)
 			self.played_sound = false
 		end
 	else

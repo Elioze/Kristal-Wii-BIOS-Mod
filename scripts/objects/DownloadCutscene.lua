@@ -6,6 +6,9 @@ function DownloadCutscene:init(id, callback)
     self.callback = callback
 
     self.animations = {
+        starwalker = {
+            ["starwalker"] = {"npcs/starwalker", 0, true}
+        },
         kris = {
             ["spin"] = {"party/kris/dark/walk/down", 0.5, false, {{"party/kris/dark/walk/left", 0.5, false, {{"party/kris/dark/walk/up", 0.5, false, {{"party/kris/dark/walk/right", 0.5, false, {{"party/kris/dark/walk/down", 0.5, false}}}}}}}}},
             ["ball"] = {"party/kris/dark/ball", 0.5, true},
@@ -22,10 +25,14 @@ function DownloadCutscene:init(id, callback)
     }
 
     self.kris = Sprite()
+    self.starwaler = Sprite()
     --self.susie = Sprite("party/susie/dark/susie_pose", SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height)
     --self.ralsei = Sprite("party/ralsei/dark/ralsei_pose", SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height)
+    self.characters = {}
 
-    self.kris:set(self.animations["kris"]["spin"])
+    table.insert(self.characters, self.kris)
+
+    self.kris:set(self.animations["kris"]["pose"])
     self.kris:play(0.1)
 end
 
@@ -38,7 +45,9 @@ function DownloadCutscene:update()
 end
 
 function DownloadCutscene:draw()
-    Draw.draw(self.kris:getTexture(), 100, 100, 0, 2, 2)
+    for index, chara in pairs(self.characters) do
+        Draw.draw(chara:getTexture(), 100, 100, 0, 2, 2)
+    end
 end
 
 return DownloadCutscene
