@@ -47,10 +47,6 @@ function ShopChannel:init()
     self.preview_list = {}
 
     Kristal.showCursor()
-
-    --self:pageButton()
-
-    --self:changeMod()
 end
 
 function ShopChannel:enter()
@@ -85,7 +81,7 @@ function ShopChannel:enter()
 		self.screen_helper_upper:addChild(self.popUp)
     end
 
-    self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+    self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "button", function ()
         self.is_loading = true
         self.loading_rotation = 1
         self.loading_sound:play()
@@ -100,7 +96,7 @@ function ShopChannel:enter()
             self.is_loading = false
             self.loading_sound:stop()
         end)
-    end)
+    end, 249, 145)
     self.screen_helper:addChild(self.access_btn)
 
     self.back_button = TextButtonInApp(140, 440, "Wii Menu", function ()
@@ -203,7 +199,7 @@ function ShopChannel:download()
 end
 
 function ShopChannel:drawDownloadButton()
-    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 100, "settings", function()
+    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 100, "button", function()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
@@ -212,7 +208,7 @@ function ShopChannel:drawDownloadButton()
             dl_anim:remove()
         end)
         self.screen_helper:addChild(dl_anim)
-    end)
+    end, 92, 72)
     self.screen_helper:addChild(self.download_button)
 end
 
@@ -290,7 +286,7 @@ end
 
 function ShopChannel:pageButton()
     if self.current_page ~= 1 then
-        self.left_button = ShopButton(SCREEN_WIDTH/2 + 87, SCREEN_HEIGHT - 45, "left", function()
+        self.left_button = ShopButton(SCREEN_WIDTH/2 + 99, SCREEN_HEIGHT - 45, "button", function()
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
@@ -302,13 +298,12 @@ function ShopChannel:pageButton()
                 self.is_loading = false
                 self.loading_sound:stop()
                 end)
-            end)
-        self.left_button.sprite:setScale(40/self.left_button.sprite.width, 40/self.left_button.sprite.height)
+            end, 40, 40)
         self.screen_helper:addChild(self.left_button)
     end
 
     if self.current_page ~= self.pages then
-        self.right_button = ShopButton(SCREEN_WIDTH/2 + 185, SCREEN_HEIGHT - 45, "right", function() 
+        self.right_button = ShopButton(SCREEN_WIDTH/2 + 192, SCREEN_HEIGHT - 45, "button", function() 
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
@@ -320,7 +315,7 @@ function ShopChannel:pageButton()
                 self.is_loading = false
                 self.loading_sound:stop()
                 end)
-            end)
+            end, 40, 40)
         self.right_button.sprite:setScale(40/self.right_button.sprite.width, 40/self.right_button.sprite.height)
         self.screen_helper:addChild(self.right_button)
     end
@@ -331,7 +326,7 @@ function ShopChannel:removeMainButton()
 end
 
 function ShopChannel:drawMainButton()
-    self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "wii_settings", function ()
+    self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "button", function ()
         self.is_loading = true
         self.loading_rotation = 1
         self.loading_sound:play()
@@ -346,7 +341,7 @@ function ShopChannel:drawMainButton()
             self.is_loading = false
             self.loading_sound:stop()
         end)
-    end)
+    end, 249, 145)
     self.screen_helper:addChild(self.access_btn)
 end
 
@@ -375,9 +370,14 @@ end
 
 function ShopChannel:draw()
 
+    local gradient = Assets.getTexture("shop/gradient")
+
     love.graphics.push()
 
-    Draw.draw(self.bg, 0, 0)
+    Draw.rectangle("fill", 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+
+    Draw.draw(gradient, 0, 0, 0, 1, SCREEN_HEIGHT/gradient:getHeight())
+    Draw.draw(gradient, SCREEN_WIDTH, 0, 0, -1, SCREEN_HEIGHT/gradient:getHeight())
 
     Draw.setColor(1, 1, 1)
     if self.is_loading then
