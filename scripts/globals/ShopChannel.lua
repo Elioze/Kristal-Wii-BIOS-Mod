@@ -364,6 +364,11 @@ function ShopChannel:changeMod(mod_num)
     self.date = os.date("%m/%d/%Y", date)
 
     self.dev_name = self.mod_list[self.mod]["_aSubmitter"]["_sName"]
+    if self.mod_list[self.mod]["_bIsNsfw"] then
+        self.rating = "mature"
+    else
+        self.rating = "teen"
+    end
 
     self.preview = preview
 end
@@ -381,9 +386,11 @@ function ShopChannel:draw()
     end
     Draw.setColor(0, 0, 0)
     if self.state == "MAIN" then
+        love.graphics.print("Wii Kromer Channel", 104, 45)
         local lol_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth("You're in Main Menu"))/2
         love.graphics.print("You're in Main Menu", lol_x, SCREEN_HEIGHT/2 - 10)
     elseif self.state == "SEARCH" then
+        love.graphics.print("Fangames", 104, 45)
         Draw.rectangle("line", 105, 85, SCREEN_WIDTH/2 + 110, SCREEN_HEIGHT/2 + 80)
 
         love.graphics.print(self.current_page.."/"..self.pages, SCREEN_WIDTH/2 + 125, SCREEN_HEIGHT - 75)
@@ -421,6 +428,7 @@ function ShopChannel:draw()
     elseif self.state == "GAME" then
         Draw.setColor(1, 1, 1)
         Draw.draw(self.preview, SCREEN_WIDTH/2 - 450/2 + 6, 110 + 8, 0, 160/self.preview:getWidth(), 120/self.preview:getHeight())
+        Draw.draw(Assets.getTexture("shop/esrb_"..self.rating), 325, 110 + 8, 0, 0.055, 0.055)
         Draw.setColor(0, 0, 0)
         Draw.rectangle("fill", SCREEN_WIDTH/2 - 450/2 - 1, 82, 200, 28)
         Draw.rectangle("line", SCREEN_WIDTH/2 - 450/2, 110, 450, 220)
