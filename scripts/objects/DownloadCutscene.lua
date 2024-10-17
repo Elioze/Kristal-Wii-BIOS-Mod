@@ -102,38 +102,43 @@ function DownloadCutscene:charaSlideTo(id, chara, x, y, speed, anim)
     else
         if chara.x > x then
             chara:set(self.animations[id]["walk_right"])
-        else
+        elseif chara.x < x then
             chara:set(self.animations[id]["walk_left"])
         end
 
         if chara.y > y then
             chara:set(self.animations[id]["walk_up"])
-        else
+        elseif chara.y < y then
             chara:set(self.animations[id]["walk_down"])
         end
     end
-    self.timer:every(0, function()
+    local timer_x = self.timer:every(0, function()
+        --print(chara.x - (speed * DT), x)
         if (chara.x - (speed * DT) < x and chara.x > x) or (chara.x + (speed * DT) > x and chara.x < x) then
             chara.x = x
         elseif chara.x > x then
             chara.x = chara.x - (speed * DT)
-        else
+        elseif chara.x < x then
             chara.x = chara.x + (speed * DT)
         end
     end)
 
-    self.timer:every(0, function()
+    local timer_y = self.timer:every(0, function()
         if (chara.y - (speed * DT) < y and chara.y > y) or (chara.y + (speed * DT) > y and chara.y < y) then
             chara.y = y
         elseif chara.y > y then
             chara.y = chara.y - (speed * DT)
-        else
+        elseif chara.y < y then
             chara.y = chara.y + (speed * DT)
         end
     end)
 
-    if chara.x == x and chara.y == y then
-        self.timer:clear()
+    if chara.x == x then
+        self.timer:cancel(timer_x)
+    end
+
+    if chara.y == y then
+        self.timer:cancel(timer_y)
     end
 end
 
