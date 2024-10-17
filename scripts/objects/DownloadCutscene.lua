@@ -21,7 +21,7 @@ function DownloadCutscene:init(id, callback)
             ["walk_up"] = {"party/kris/dark/walk/up", 0.5, true},
             ["walk_left"] = {"party/kris/dark/walk/left", 0.5, true},
             ["walk_right"] = {"party/kris/dark/walk/right", 0.5, true},
-            ["ball"] = {"party/kris/dark/ball", 0.5, true},
+            ["ball"] = {"party/kris/dark/ball", 0.1, true},
             ["pose"] = {"party/kris/dark/pose", 0.5, true}
         },
         susie = {
@@ -29,7 +29,7 @@ function DownloadCutscene:init(id, callback)
             ["walk_up"] = {"party/susie/dark/walk/up", 0.5, true},
             ["walk_left"] = {"party/susie/dark/walk/left", 0.5, true},
             ["walk_right"] = {"party/susie/dark/walk/right", 0.5, true},
-            ["ball"] = {"party/susie/dark/ball", 0.5, true},
+            ["ball"] = {"party/susie/dark/ball", 0.1, true},
             ["pose"] = {"party/susie/dark/pose", 0.5, true}
         },
         ralsei = {
@@ -37,7 +37,7 @@ function DownloadCutscene:init(id, callback)
             ["walk_up"] = {"party/ralsei/dark/walk/up", 0.5, true},
             ["walk_left"] = {"party/ralsei/dark/walk/left", 0.5, true},
             ["walk_right"] = {"party/ralsei/dark/walk/right", 0.5, true},
-            ["ball"] = {"party/ralsei/dark/ball", 0.5, true},
+            ["ball"] = {"party/ralsei/dark/ball", 0.1, true},
             ["pose"] = {"party/ralsei/dark/pose", 0.5, true}
         },
     }
@@ -67,10 +67,12 @@ function DownloadCutscene:init(id, callback)
         self.characters["ralsei"] = self.ralsei
 
         for index, chara in pairs(self.characters) do
-            self.timer:after(3, function()
-                self:charaSlideTo(index, chara, chara.x, 50, 10, 0.1, self.animations[index]["ball"])
-            end)
-            --[[self.timer:every(1.5, function()
+            --[[self.timer:after(3, function()
+                --self:charaSlideTo(index, chara, chara.x, 50, 10, 0.1, self.animations[index]["ball"])
+                chara:set(self.animations[index]["ball"])
+                chara:slideTo(chara.x, 50, 2)
+            end)]]
+            self.timer:every(1.5, function()
                 if chara.anim_sprite == self.animations[index]["walk_down"][1] then
                     chara:set(self.animations[index]["walk_right"])
                 elseif chara.anim_sprite == self.animations[index]["walk_right"][1] then
@@ -81,7 +83,7 @@ function DownloadCutscene:init(id, callback)
                     chara:set(self.animations[index]["walk_down"])
                 end
                 chara:play(0.2)
-            end)]]
+            end)
         end
     else
         self.wall = Sprite()
@@ -92,103 +94,27 @@ function DownloadCutscene:init(id, callback)
         self.starwalker:set(self.animations["starwalker"]["starwalker"])
         table.insert(self.characters, self.starwalker)
     end
-end
 
-function DownloadCutscene:charaSlideTo(id, chara, x, y, speed, anim_speed, anim)
-    speed = speed*5
-    
-    if anim then
-        chara:set(anim)
-    else
-        if chara.x > x then
-            chara:set(self.animations[id]["walk_left"])
-        elseif chara.x < x then
-            chara:set(self.animations[id]["walk_right"])
-        end
-
-        if chara.y > y then
-            chara:set(self.animations[id]["walk_up"])
-        elseif chara.y < y then
-            chara:set(self.animations[id]["walk_down"])
-        end
-    end
-
-    if anim_speed then
-        chara:play(anim_speed)
-    end
-    local timer_x = self.timer:every(0, function()
-        if (chara.x - (speed * DT) < x and chara.x > x) or (chara.x + (speed * DT) > x and chara.x < x) then
-            chara.x = x
-        elseif chara.x > x then
-            chara.x = chara.x - (speed * DT)
-        elseif chara.x < x then
-            chara.x = chara.x + (speed * DT)
-        end
+    self.timer:after(5, function ()
+        self.anim_done = true
     end)
-
-    local timer_y = self.timer:every(0, function()
-        if (chara.y - (speed * DT) < y and chara.y > y) or (chara.y + (speed * DT) > y and chara.y < y) then
-            chara.y = y
-        elseif chara.y > y then
-            chara.y = chara.y - (speed * DT)
-        elseif chara.y < y then
-            chara.y = chara.y + (speed * DT)
-        end
-    end)
-
-    if chara.x == x then
-        self.timer:cancel(timer_x)
-    end
-
-    if chara.y == y then
-        self.timer:cancel(timer_y)
-    end
 end
-
---[[function DownloadCutscene:charaSlideFor(id, chara, x, y, speed, anim)
-    speed = speed*2
-    
-    if anim then
-        chara:set(anim)
-    else
-        if 0 > x then
-            chara:set(self.animations[id]["walk_left"])
-        elseif 0 > x then
-            chara:set(self.animations[id]["walk_right"])
-        end
-
-        if 0 < y then
-            chara:set(self.animations[id]["walk_down"])
-        elseif 0 > y then
-            chara:set(self.animations[id]["walk_up"])
-        end
-    end
-    self.timer:every(0, function()
-        chara.x = chara.x + (speed * DT)
-    end, math.abs((chara.x - x)/(speed * DT)))
-
-    self.timer:every(0, function()
-        chara.y = chara.y + (speed * DT)
-    end, math.abs((chara.y - y)/(speed * DT)))
-end]]
 
 function DownloadCutscene:update(dt)
     self.timer:update(dt)
 
     for _, chara in pairs(self.characters) do
         chara:update()
-
-        --print(chara.anim_sprite)
     end
 
     if self.anim_done and self.callback then
         self.callback()
+        self:remove()
     end
 end
 
 function DownloadCutscene:draw()
     for index, chara in pairs(self.characters) do
-        print(chara.x, chara.y)
         if self.id == 1 then
             Draw.draw(chara:getTexture(), chara.x, chara.y, 0, 2, 2)
         else

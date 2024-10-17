@@ -168,19 +168,12 @@ function ShopChannel:update(dt)
                 print("exe")
             end
         end
-    elseif self.state == "DOWNLOAD" then
-        if Input.pressed("cancel") then
-            
-        end
-        --if not self.is_downloading and self.btn_cooldown <= 0 then self:download() end
     end
 
     Kristal.showCursor()
 end
 
 function ShopChannel:download()
-    self.is_downloading = true
-
     local code, file = https.request(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
 
     if code == 200 then
@@ -191,7 +184,7 @@ function ShopChannel:download()
         self:drawButton()
         self:changePage()
         self:removeDownloadButton()
-        self.is_downloading = false
+        self.screen_helper:addChild(self.back_button)
     else
         local fail_popup = popUp("Download Failed", {"OK"})
         self.screen_helper:addChild(fail_popup)
@@ -205,7 +198,6 @@ function ShopChannel:drawDownloadButton()
         self.state = "DOWNLOAD"
         local dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
             self:download()
-            dl_anim:remove()
         end)
         self.screen_helper:addChild(dl_anim)
     end, 92, 72)
