@@ -203,7 +203,7 @@ function ShopChannel:drawDownloadButton()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
-        local dl_anim = DownloadCutscene(1, function ()
+        local dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
             self:download()
             dl_anim:remove()
         end)
@@ -286,7 +286,7 @@ end
 
 function ShopChannel:pageButton()
     if self.current_page ~= 1 then
-        self.left_button = ShopButton(SCREEN_WIDTH/2 + 99, SCREEN_HEIGHT - 45, "button", function()
+        self.left_button = ShopButton(SCREEN_WIDTH/2 + 92, SCREEN_HEIGHT - 45, "button_left", function()
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
@@ -298,12 +298,12 @@ function ShopChannel:pageButton()
                 self.is_loading = false
                 self.loading_sound:stop()
                 end)
-            end, 40, 40)
+            end)
         self.screen_helper:addChild(self.left_button)
     end
 
     if self.current_page ~= self.pages then
-        self.right_button = ShopButton(SCREEN_WIDTH/2 + 192, SCREEN_HEIGHT - 45, "button", function() 
+        self.right_button = ShopButton(SCREEN_WIDTH/2 + 198, SCREEN_HEIGHT - 45, "button_right", function() 
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
@@ -315,8 +315,7 @@ function ShopChannel:pageButton()
                 self.is_loading = false
                 self.loading_sound:stop()
                 end)
-            end, 40, 40)
-        self.right_button.sprite:setScale(40/self.right_button.sprite.width, 40/self.right_button.sprite.height)
+            end)
         self.screen_helper:addChild(self.right_button)
     end
 end

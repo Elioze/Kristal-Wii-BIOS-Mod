@@ -3,22 +3,40 @@ local DownloadCutscene, super = Class(Object)
 function DownloadCutscene:init(id, callback)
     super.init(self)
 
+    self.timer = LibTimer.new()
+
+    self.id = id or 0
+
     self.callback = callback
 
     self.animations = {
+        wall = {
+            ["yapping"] = {"npcs/wall", 0.2, true}
+        },
         starwalker = {
-            ["starwalker"] = {"npcs/starwalker", 0, true}
+            ["starwalker"] = {"npcs/starwalker", 1, true}
         },
         kris = {
-            ["spin"] = {"party/kris/dark/walk/down", 0.5, false, {{"party/kris/dark/walk/left", 0.5, false, {{"party/kris/dark/walk/up", 0.5, false, {{"party/kris/dark/walk/right", 0.5, false, {{"party/kris/dark/walk/down", 0.5, false}}}}}}}}},
+            ["walk_down"] = {"party/kris/dark/walk/down", 0.5, true},
+            ["walk_up"] = {"party/kris/dark/walk/up", 0.5, false},
+            ["walk_left"] = {"party/kris/dark/walk/left", 0.5, false},
+            ["walk_right"] = {"party/kris/dark/walk/right", 0.5, false},
             ["ball"] = {"party/kris/dark/ball", 0.5, true},
             ["pose"] = {"party/kris/dark/pose", 0.5, true}
         },
         susie = {
+            ["walk_down"] = {"party/susie/dark/walk/down", 0.5, true},
+            ["walk_up"] = {"party/susie/dark/walk/up", 0.5, false},
+            ["walk_left"] = {"party/susie/dark/walk/left", 0.5, false},
+            ["walk_right"] = {"party/susie/dark/walk/right", 0.5, false},
             ["ball"] = {"party/susie/dark/ball", 0.5, true},
             ["pose"] = {"party/susie/dark/pose", 0.5, true}
         },
         ralsei = {
+            ["walk_down"] = {"party/ralsei/dark/walk/down", 0.5, true},
+            ["walk_up"] = {"party/ralsei/dark/walk/up", 0.5, false},
+            ["walk_left"] = {"party/ralsei/dark/walk/left", 0.5, false},
+            ["walk_right"] = {"party/ralsei/dark/walk/right", 0.5, false},
             ["ball"] = {"party/ralsei/dark/ball", 0.5, true},
             ["pose"] = {"party/ralsei/dark/pose", 0.5, true}
         },
@@ -28,20 +46,52 @@ function DownloadCutscene:init(id, callback)
 
     if id == 1 then
         self.kris = Sprite()
-        self.kris:set(self.animations["kris"]["pose"])
-        self.kris:play(0.1)
-        table.insert(self.characters, self.kris)
+        self.kris:set(self.animations["kris"]["walk_down"])
+        self.kris:play(0.2)
+        self.characters["kris"] = self.kris
+
+        self.susie = Sprite()
+        self.susie:set(self.animations["susie"]["walk_down"])
+        self.susie:play(0.2)
+        self.characters["susie"] = self.susie
+
+        self.ralsei = Sprite()
+        self.ralsei:set(self.animations["ralsei"]["walk_down"])
+        self.ralsei:play(0.2)
+        self.characters["ralsei"] = self.ralsei
+
+        for index, chara in pairs(self.characters) do
+            self.timer:every(1.5, function()
+                if chara.anim_sprite == self.animations[index]["walk_down"][1] then
+                    chara:set(self.animations[index]["walk_right"])
+                elseif chara.anim_sprite == self.animations[index]["walk_right"][1] then
+                    chara:set(self.animations[index]["walk_up"])
+                elseif chara.anim_sprite == self.animations[index]["walk_up"][1] then
+                    chara:set(self.animations[index]["walk_left"])
+                else
+                    chara:set(self.animations[index]["walk_down"])
+                end
+                chara:play(0.2)
+            end)
+        end
     else
-        self.starwaler = Sprite()
-        self.starwaler:set(self.animations["starwaler"]["starwaler"])
-        self.starwaler:play(0.1)
-        table.insert(self.characters, self.starwaler)
+        self.wall = Sprite()
+        self.wall:set(self.animations["wall"]["yapping"])
+        table.insert(self.characters, self.wall)
+
+        self.starwalker = Sprite()
+        self.starwalker:set(self.animations["starwalker"]["starwalker"])
+        table.insert(self.characters, self.starwalker)
     end
 end
 
-function DownloadCutscene:update()
+function DownloadCutscene:update(dt)
+    self.timer:update(dt)
+
     for _, chara in pairs(self.characters) do
         chara:update()
+
+        --print(chara.anim_sprite)
     end
 
     if self.anim_done and self.callback then
@@ -50,8 +100,22 @@ function DownloadCutscene:update()
 end
 
 function DownloadCutscene:draw()
-    for _, chara in pairs(self.characters) do
-        Draw.draw(chara:getTexture(), 100, 100, 0, 2, 2)
+    for index, chara in pairs(self.characters) do
+        if self.id == 1 then
+            if index == "susie" then
+                Draw.draw(chara:getTexture(), SCREEN_WIDTH/2-chara.width - 80, SCREEN_HEIGHT/2-chara.height, 0, 2, 2)
+            elseif index == "ralsei" then
+                Draw.draw(chara:getTexture(), SCREEN_WIDTH/2-chara.width + 80, SCREEN_HEIGHT/2-chara.height, 0, 2, 2)
+            else
+                Draw.draw(chara:getTexture(), SCREEN_WIDTH/2-chara.width, SCREEN_HEIGHT/2-chara.height, 0, 2, 2)
+            end
+        else
+            if index == 1 then
+                Draw.draw(chara:getTexture(), SCREEN_WIDTH/2-chara.width, (SCREEN_HEIGHT/2-chara.height) - 80, 0, 2, 2)
+            else
+                Draw.draw(chara:getTexture(), SCREEN_WIDTH/2-chara.width, SCREEN_HEIGHT/2-chara.height + 80, 0, 2, 2)
+            end
+        end
     end
 end
 

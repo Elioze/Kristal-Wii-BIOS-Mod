@@ -2,8 +2,6 @@ local ShopButton, super = Class(Object)
 
 function ShopButton:init(x, y, image, callback, width, height)
 	super:init(self, x, y)
-	
-	image = "button"
 
 	if image then
 		self.path = "shop/" .. image
@@ -24,10 +22,12 @@ function ShopButton:init(x, y, image, callback, width, height)
 		self.callback = callback
 	end
 
-	self.width = width or 1
-	self.height = height or 1
+	self.width = width or self.sprite.width or 1
+	self.height = height or self.sprite.height or 1
 
-	self.sprite:setScale(width/self.sprite.width, height/self.sprite.height)
+	print(self.sprite.width)
+
+	self.sprite:setScale(self.width/self.sprite.width, self.height/self.sprite.height)
 
 	self.played_sound = false
 end
