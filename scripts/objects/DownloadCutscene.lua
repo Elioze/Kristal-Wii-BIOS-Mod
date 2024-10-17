@@ -24,20 +24,25 @@ function DownloadCutscene:init(id, callback)
         },
     }
 
-    self.kris = Sprite()
-    self.starwaler = Sprite()
-    --self.susie = Sprite("party/susie/dark/susie_pose", SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height)
-    --self.ralsei = Sprite("party/ralsei/dark/ralsei_pose", SCREEN_WIDTH/2 - self.kris.width, SCREEN_HEIGHT/2 - self.kris.height)
     self.characters = {}
 
-    table.insert(self.characters, self.kris)
-
-    self.kris:set(self.animations["kris"]["pose"])
-    self.kris:play(0.1)
+    if id == 1 then
+        self.kris = Sprite()
+        self.kris:set(self.animations["kris"]["pose"])
+        self.kris:play(0.1)
+        table.insert(self.characters, self.kris)
+    else
+        self.starwaler = Sprite()
+        self.starwaler:set(self.animations["starwaler"]["starwaler"])
+        self.starwaler:play(0.1)
+        table.insert(self.characters, self.starwaler)
+    end
 end
 
 function DownloadCutscene:update()
-    self.kris:update()
+    for _, chara in pairs(self.characters) do
+        chara:update()
+    end
 
     if self.anim_done and self.callback then
         self.callback()
@@ -45,7 +50,7 @@ function DownloadCutscene:update()
 end
 
 function DownloadCutscene:draw()
-    for index, chara in pairs(self.characters) do
+    for _, chara in pairs(self.characters) do
         Draw.draw(chara:getTexture(), 100, 100, 0, 2, 2)
     end
 end
