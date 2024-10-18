@@ -51,22 +51,22 @@ function DownloadCutscene:init(id, callback)
         self.kris = Sprite()
         self.kris:set("party/kris/dark/walk/down_1")
         self.kris.x = SCREEN_WIDTH/2-self.kris.width
-        self.kris.y = SCREEN_HEIGHT/2-self.kris.height - 40
-        self.kris_startx, self.kris_starty = SCREEN_WIDTH/2-self.kris.width, SCREEN_HEIGHT/2-self.kris.height - 40
+        self.kris.y = SCREEN_HEIGHT/2-self.kris.height + 40
+        self.kris_startx, self.kris_starty = SCREEN_WIDTH/2-self.kris.width, SCREEN_HEIGHT/2-self.kris.height + 40
         self.characters["kris"] = self.kris
 
         self.susie = Sprite()
         self.susie:set("party/susie/dark/walk/up_1")
         self.susie.x = SCREEN_WIDTH/2-self.susie.width + 44
-        self.susie.y = SCREEN_HEIGHT/2-self.susie.height - 10
-        self.susie_startx, self.susie_starty = SCREEN_WIDTH/2-self.susie.width + 44, SCREEN_HEIGHT/2-self.susie.height - 10
+        self.susie.y = SCREEN_HEIGHT/2-self.susie.height + 70
+        self.susie_startx, self.susie_starty = SCREEN_WIDTH/2-self.susie.width + 44, SCREEN_HEIGHT/2-self.susie.height + 70
         self.characters["susie"] = self.susie
 
         self.ralsei = Sprite()
         self.ralsei:set("party/ralsei/dark/walk/up_1")
         self.ralsei.x = SCREEN_WIDTH/2-self.ralsei.width - 44
-        self.ralsei.y = SCREEN_HEIGHT/2-self.ralsei.height - 6
-        self.ralsei_startx, self.ralsei_starty = SCREEN_WIDTH/2-self.ralsei.width - 44, SCREEN_HEIGHT/2-self.ralsei.height - 6
+        self.ralsei.y = SCREEN_HEIGHT/2-self.ralsei.height + 74
+        self.ralsei_startx, self.ralsei_starty = SCREEN_WIDTH/2-self.ralsei.width - 44, SCREEN_HEIGHT/2-self.ralsei.height + 74
         self.characters["ralsei"] = self.ralsei
 
         local function cutscene()

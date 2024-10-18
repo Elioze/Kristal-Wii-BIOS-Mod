@@ -194,7 +194,7 @@ function ShopChannel:drawDownloadButton()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
-        local dl_anim = DownloadCutscene(Utils.round(Utils.random(0, 1)), function ()
+        local dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
             self:download()
         end)
         self.screen_helper:addChild(dl_anim)
@@ -432,6 +432,13 @@ function ShopChannel:draw()
         Draw.setColor(0, 0, 1)
         local mod_name_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth(self.mod_name)*0.75)/2
         love.graphics.print(self.mod_name, mod_name_x, 259, 0, 0.75, 0.75)
+    elseif self.state == "DOWNLOAD" then
+        Draw.setColor(0, 0, 0)
+        love.graphics.print("Download Software", 104, 45)
+        love.graphics.print("You are downloading", (SCREEN_WIDTH - Assets.getFont("main"):getWidth("You are downloading")*0.75)/2, 100, 0, 0.75, 0.75)
+        Draw.setColor(0, 0, 1)
+        local mod_name_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth(self.mod_name)*0.75)/2
+        love.graphics.print(self.mod_name, mod_name_x, 120, 0, 0.75, 0.75)
     end
 
     self.screen_helper:draw()
