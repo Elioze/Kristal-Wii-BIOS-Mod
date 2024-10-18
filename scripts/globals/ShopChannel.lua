@@ -190,7 +190,7 @@ function ShopChannel:download()
 end
 
 function ShopChannel:drawDownloadButton()
-    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 100, "button", function()
+    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 120, "button", function()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
@@ -198,7 +198,7 @@ function ShopChannel:drawDownloadButton()
             self:download()
         end)
         self.screen_helper:addChild(dl_anim)
-    end, 92, 72)
+    end, 162, 72)
     self.screen_helper:addChild(self.download_button)
 end
 
@@ -368,6 +368,12 @@ function ShopChannel:draw()
     Draw.draw(gradient, 0, 0, 0, 1, SCREEN_HEIGHT/gradient:getHeight())
     Draw.draw(gradient, SCREEN_WIDTH, 0, 0, -1, SCREEN_HEIGHT/gradient:getHeight())
 
+    Draw.setColor(0.50, 0.50, 0.50)
+    for i = 1, 31 do
+        Draw.rectangle("fill", -2 + i*20, 80, 4, 4)
+        Draw.rectangle("fill", -2 + i*20, SCREEN_HEIGHT - 80, 4, 4)
+    end
+
     Draw.setColor(1, 1, 1)
     if self.is_loading then
         --love.graphics.print("LOADING", SCREEN_WIDTH/2 - 64, SCREEN_HEIGHT - 50)
@@ -380,13 +386,13 @@ function ShopChannel:draw()
         love.graphics.print("You're in Main Menu", lol_x, SCREEN_HEIGHT/2 - 10)
     elseif self.state == "SEARCH" then
         love.graphics.print("Fangames", 104, 45)
-        Draw.rectangle("line", 105, 85, SCREEN_WIDTH/2 + 110, SCREEN_HEIGHT/2 + 80)
+        Draw.rectangle("line", 105, 90, SCREEN_WIDTH/2 + 110, SCREEN_HEIGHT/2 + 65)
 
         love.graphics.print(self.current_page.."/"..self.pages, SCREEN_WIDTH/2 + 125, SCREEN_HEIGHT - 75)
         
         Draw.pushScissor()
         -- Mod List
-        Draw.scissor(106, 86, SCREEN_WIDTH/2 + 108, SCREEN_HEIGHT/2 + 78)
+        Draw.scissor(106, 91, SCREEN_WIDTH/2 + 108, SCREEN_HEIGHT/2 + 63)
 
         -- Mod Scroller
         Draw.rectangle("fill", 495, 121, 38, SCREEN_HEIGHT/2 + 11)
@@ -415,23 +421,24 @@ function ShopChannel:draw()
         
         Draw.popScissor()
     elseif self.state == "GAME" then
+        love.graphics.print("Details", 104, 45)
         Draw.setColor(1, 1, 1)
-        Draw.draw(self.preview, SCREEN_WIDTH/2 - 450/2 + 6, 110 + 8, 0, 160/self.preview:getWidth(), 120/self.preview:getHeight())
-        Draw.draw(Assets.getTexture("shop/esrb_"..self.rating), 325, 110 + 8, 0, 0.055, 0.055)
+        Draw.draw(self.preview, SCREEN_WIDTH/2 - 225 + 6, 120 + 8, 0, 160/self.preview:getWidth(), 120/self.preview:getHeight())
+        Draw.draw(Assets.getTexture("shop/esrb_"..self.rating), 325, 120 + 8, 0, 0.055, 0.055)
         Draw.setColor(0, 0, 0)
-        Draw.rectangle("fill", SCREEN_WIDTH/2 - 450/2 - 1, 82, 200, 28)
-        Draw.rectangle("line", SCREEN_WIDTH/2 - 450/2, 110, 450, 220)
-        love.graphics.line(SCREEN_WIDTH/2 - 450/2 + 16, 250, 540 - 16, 250)
+        Draw.rectangle("fill", SCREEN_WIDTH/2 - 225 - 1, 92, 200, 28)
+        Draw.rectangle("line", SCREEN_WIDTH/2 - 225, 120, 450, 200)
+        love.graphics.line(SCREEN_WIDTH/2 - 225 + 16, 260, 540 - 16, 260)
         Draw.setColor(1, 1, 1)
-        love.graphics.print(love.system.getOS(), SCREEN_WIDTH/2 - 450/2 + 3, 84, 0, 0.5, 0.75)
+        love.graphics.print(love.system.getOS(), SCREEN_WIDTH/2 - 225 + 3, 94, 0, 0.5, 0.75)
         Draw.setColor(0, 0, 0)
-        love.graphics.print("Released "..self.date, 264, 184, 0, 0.5, 0.75)
-        love.graphics.print("For 1 player", 444, 185, 0, 0.5, 0.75)
-        love.graphics.print(self.dev_name, 264, 184 + 18, 0, 0.5, 0.75)
-        love.graphics.print("Fangame", 264, 184 + 18 + 20, 0, 0.5, 0.75)
+        love.graphics.print("Released "..self.date, 264, 194, 0, 0.5, 0.75)
+        love.graphics.print("For 1 player", 444, 195, 0, 0.5, 0.75)
+        love.graphics.print(self.dev_name, 264, 194 + 18, 0, 0.5, 0.75)
+        love.graphics.print("Fangame", 264, 194 + 18 + 20, 0, 0.5, 0.75)
         Draw.setColor(0, 0, 1)
         local mod_name_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth(self.mod_name)*0.75)/2
-        love.graphics.print(self.mod_name, mod_name_x, 259, 0, 0.75, 0.75)
+        love.graphics.print(self.mod_name, mod_name_x, 269, 0, 0.75, 0.75)
     elseif self.state == "DOWNLOAD" then
         Draw.setColor(0, 0, 0)
         love.graphics.print("Download Software", 104, 45)

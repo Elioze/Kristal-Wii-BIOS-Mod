@@ -37,12 +37,12 @@ function ModButton:update()
 	local screen_x, screen_y = self:getScreenPos()
 	local up_y, down_y = 0, self.height
 
-	if screen_y + self.height > SCREEN_HEIGHT/2 + 78 + 86 then
-    	down_y = 100 - ((screen_y + self.height) - (SCREEN_HEIGHT/2 + 78 + 86))
+	if screen_y + self.height > SCREEN_HEIGHT/2 + 91 + 63 then
+    	down_y = 100 - ((screen_y + self.height) - (SCREEN_HEIGHT/2 + 91 + 63))
 	end
 
-	if screen_y < 86 then
-    	up_y = (86 - screen_y)
+	if screen_y < 91 then
+    	up_y = (91 - screen_y)
 	end
 
 	if not self.pressed then
@@ -76,12 +76,12 @@ function ModButton:draw()
 
 	local _, screen_y = self:getScreenPos()
 
-	if screen_y + self.height > SCREEN_HEIGHT/2 + 78 + 86 then
-    	Draw.scissor(-2, -1, self.width + 4, 100 - ((screen_y + self.height) - (SCREEN_HEIGHT/2 + 78 + 86)) + 2)
+	if screen_y + self.height > SCREEN_HEIGHT/2 + 91 + 63 then
+    	Draw.scissor(-2, -1, self.width + 4, 100 - ((screen_y + self.height) - (SCREEN_HEIGHT/2 + 91 + 63)) + 2)
 	end
 
-	if screen_y < 86 then
-    	Draw.scissor(-2, self.height + 1, self.width + 4, -(100 + (screen_y - 86)) - 2)
+	if screen_y < 91 then
+    	Draw.scissor(-2, self.height + 1, self.width + 4, -(100 + (screen_y - 91)) - 2)
 	end
 
 	if self.hover then
