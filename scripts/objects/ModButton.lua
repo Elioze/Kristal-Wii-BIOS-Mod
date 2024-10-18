@@ -7,6 +7,7 @@ function ModButton:init(x, y, id)
 	self.height = 100
 
 	self.hover = false
+	self.can_hover = true
 
 	self.id = id
 end
@@ -93,6 +94,6 @@ function ModButton:draw()
 end
 
 function ModButton:canClick() return Game.wii_menu.btn_cooldown <= 0 end
-function ModButton:canHover() return true end
+function ModButton:canHover() return self.can_hover end
 
 return ModButton

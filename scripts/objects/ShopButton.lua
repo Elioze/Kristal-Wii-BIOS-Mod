@@ -3,6 +3,8 @@ local ShopButton, super = Class(Object)
 function ShopButton:init(x, y, image, callback, width, height)
 	super:init(self, x, y)
 
+	self.can_hover = true
+
 	if image then
 		self.path = "shop/" .. image
 		if love.filesystem.getInfo(Kristal.Mods.getMod("wii_kristal").path .. "/assets/sprites/shop/" .. Game.wii_data["theme"] .. "/" .. image .. ".png") then
@@ -77,6 +79,6 @@ function ShopButton:onClick()
 end
 
 function ShopButton:canClick() return Game.wii_menu.btn_cooldown <= 0 end
-function ShopButton:canHover() return true end
+function ShopButton:canHover() return self.can_hover end
 
 return ShopButton
