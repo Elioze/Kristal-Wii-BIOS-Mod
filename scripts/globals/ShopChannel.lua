@@ -61,8 +61,6 @@ function ShopChannel:enter()
 	
 	Kristal.showCursor()
     
-    --self:drawButton()
-	
 	self.cooldown = 0
 
     self.btn_cooldown = 0
@@ -196,7 +194,7 @@ function ShopChannel:drawDownloadButton()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
-        local dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
+        local dl_anim = DownloadCutscene(Utils.round(Utils.random(0, 1)), function ()
             self:download()
         end)
         self.screen_helper:addChild(dl_anim)
