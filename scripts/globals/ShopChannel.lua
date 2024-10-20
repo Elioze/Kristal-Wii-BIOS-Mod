@@ -154,9 +154,15 @@ function ShopChannel:update(dt)
         if data then
             self.request_code = data.code
             self.response = love.data.decode("string", "base64", data.body)
-            self.timer:after(0.1, function ()
-                self.callback()
-            end)
+            self.callback()
+        end
+    end
+
+    if self.is_downloading then
+        local data = love.thread.getChannel('data'):pop()
+        if data then
+            self.request_code = data.code
+            self.callback(data)
         end
     end
 
@@ -204,19 +210,93 @@ end
 
 
 function ShopChannel:download()
-    local code, file = https.request(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
+    self.thread:start(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
 
-    if code == 200 then
-        local game = love.filesystem.newFile("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "w")
-        game:write(file)
+    local lfs = love.filesystem
+
+    --- Library made by Davidobot (https://love2d.org/forums/viewtopic.php?t=78293)
+    local function enu(folder, saveDir)
+        local filesTable = lfs.getDirectoryItems(folder)
+        if saveDir ~= "" and not lfs.getInfo(saveDir, "directory") then lfs.createDirectory(saveDir) end
+        
+        for i,v in ipairs(filesTable) do
+            local file = folder.."/"..v
+            local saveFile = saveDir.."/"..v
+            if saveDir == "" then saveFile = v end
+            
+            if lfs.getInfo(file).type == "directory" then
+                lfs.createDirectory(saveFile)
+                enu(file, saveFile)
+            else
+                lfs.write(saveFile, tostring(lfs.read(file)))
+            end
+        end
+    end
+
+    local function extractZIP(file, dir, delete)
+        local dir = dir or ""
+        local temp = tostring(math.random(1000, 2000))
+        success = lfs.mount(file, temp)
+            if success then enu(temp, dir) end
+        lfs.unmount(file)
+        if delete then lfs.remove(file) end
+    end
+    --- Library made by Davidobot (https://love2d.org/forums/viewtopic.php?t=78293)
+
+    local function checkMod(mod_folder)
+        if lfs.getInfo(mod_folder.."/mod.lua") then return end
+
+        local function removeDirectory(directory)
+            local files = lfs.getDirectoryItems(directory)
+            for _, file in ipairs(files) do
+                local path = directory .. "/" .. file
+                if lfs.getInfo(path, "file") then
+                    lfs.remove(path)
+                elseif lfs.getInfo(path, "directory") then
+                    removeDirectory(path)
+                end
+            end
+            lfs.remove(directory)
+        end
+
+        local function copyDirectory(oldDir, newDir)
+            lfs.createDirectory(newDir)
+
+            local files = lfs.getDirectoryItems(oldDir)
+            for _, file in ipairs(files) do
+                local oldPath = oldDir .. "/" .. file
+                local newPath = newDir .. "/" .. file
+                if lfs.getInfo(oldPath, "file") then
+                    local data = lfs.read(oldPath)
+                    lfs.write(newPath, data)
+                elseif lfs.getInfo(oldPath, "directory") then
+                    copyDirectory(oldPath, newPath)
+                end
+            end
+            removeDirectory(oldDir)
+        end
+
+        local files = lfs.getDirectoryItems(mod_folder)
+        for _, file in ipairs(files) do
+            if lfs.getInfo(mod_folder..file.."/mod.lua") then
+                    copyDirectory(mod_folder..file, mod_folder)
+            end
+        end
+    end
+
+    self.is_downloading = true
+    self.callback = function(data)
+        self.is_downloading = false
+        local game = lfs.newFile("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "w")
+        game:write(love.data.decode("string", "base64", data.body))
         game:close()
+        extractZIP("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/", true)
+        checkMod("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/")
         self.state = "SEARCH"
+        self:drawButton()
         self:changePage()
         self:removeDownloadButton()
         self.screen_helper:addChild(self.back_button)
-    else
-        local fail_popup = popUp("Download Failed", {"OK"})
-        self.screen_helper:addChild(fail_popup)
     end
 end
 
@@ -226,8 +306,8 @@ function ShopChannel:drawDownloadButton()
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
         local dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
-            self:download()
         end)
+        self:download()
         self.screen_helper:addChild(dl_anim)
     end, 162, 72)
     self.screen_helper:addChild(self.download_button)
