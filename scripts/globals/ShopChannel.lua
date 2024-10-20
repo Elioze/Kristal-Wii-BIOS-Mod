@@ -24,6 +24,8 @@ function ShopChannel:init()
 
     self.current_page = 1
 
+    self.request_code = 200
+
     local code, pages = https.request("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803")
 
     self.request_code = code
@@ -43,6 +45,18 @@ function ShopChannel:init()
     self.loading_sound:setLooping(true)
     self.loading_sound:stop()
     self.loading_rotation = 0
+
+    self.thread_code = [[
+        local https = require('src.lib.https')
+        local link = ...
+
+        local preview_list = {}
+
+        local code, body = https.request(link)
+        body = love.data.encode("string", "base64", body)
+        love.thread.getChannel('data'):push({code = code, body = body})
+    ]]
+    self.thread = love.thread.newThread(self.thread_code)
 
     self.preview_list = {}
 
@@ -83,17 +97,15 @@ function ShopChannel:enter()
         self.is_loading = true
         self.loading_rotation = 1
         self.loading_sound:play()
-        self.timer:after(0.1, function()
-            self.current_page = 1
+        self.current_page = 1
+        self.callback = function()
             self:changePage()
-            self:setPreview()
-            self:drawButton()
             self:removeMainButton()
             self.offset = 0
-            Game.wii_menu.state = "SEARCH"
-            self.is_loading = false
-            self.loading_sound:stop()
-        end)
+        end
+        
+        self.thread:start("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
+
     end, 249, 145)
     self.screen_helper:addChild(self.access_btn)
 
@@ -113,14 +125,17 @@ function ShopChannel:enter()
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
-            self.timer:after(0.1, function ()
+            self.callback = function ()
                 self.state = "SEARCH"
                 self:drawButton()
+                self:pageButton()
                 self:changePage()
                 self:removeDownloadButton()
                 self.is_loading = false
                 self.loading_sound:stop()
-            end)
+            end
+
+            self.thread:start("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
         end
     end)
 
@@ -133,7 +148,22 @@ function ShopChannel:update(dt)
     self.screen_helper:update()
     self.screen_helper_upper:update()
 
-    self.loading_rotation = self.loading_rotation + 1 * dt
+    if self.is_loading then
+        self.loading_rotation = self.loading_rotation + 1 * dt
+        local data = love.thread.getChannel('data'):pop()
+        if data then
+            self.request_code = data.code
+            self.response = love.data.decode("string", "base64", data.body)
+            self.timer:after(0.1, function ()
+                self.callback()
+            end)
+        end
+    end
+
+    if self.request_code ~= 200 then
+        self.request_code = 200
+        self.error = true
+    end
 
     if Game.wii_menu.cooldown and Game.wii_menu.cooldown > 0 then Game.wii_menu.cooldown = Game.wii_menu.cooldown - DT end
     if Game.wii_menu.btn_cooldown and Game.wii_menu.btn_cooldown > 0 then Game.wii_menu.btn_cooldown = Game.wii_menu.btn_cooldown - DT end
@@ -171,6 +201,8 @@ function ShopChannel:update(dt)
     Kristal.showCursor()
 end
 
+
+
 function ShopChannel:download()
     local code, file = https.request(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
 
@@ -179,7 +211,6 @@ function ShopChannel:download()
         game:write(file)
         game:close()
         self.state = "SEARCH"
-        self:drawButton()
         self:changePage()
         self:removeDownloadButton()
         self.screen_helper:addChild(self.back_button)
@@ -213,7 +244,8 @@ function ShopChannel:onWheelMoved(x, y)
 end
 
 function ShopChannel:setPreview()
-    self.preview_list = {}
+    print("page: "..self.current_page)
+    --[[self.preview_list = {}
     for index, obj in pairs(self.mod_list) do
         self.preview_list[index] = {
             "mod_name",
@@ -230,30 +262,58 @@ function ShopChannel:setPreview()
         preview = love.graphics.newImage(preview)
 
         self.preview_list[index]["preview"] = preview
+    end]]
+    self.preview_list = {}
+       
+    for i = 1, #self.mod_list do
+        local image = false
+        local data
+        self.preview_list[i] = {
+            "mod_name",
+            "dev_name",
+            "preview"
+        }
+
+        self.preview_list[i]["mod_name"] = self.mod_list[i]["_sName"]
+
+        self.preview_list[i]["dev_name"] = self.mod_list[i]["_aSubmitter"]["_sName"]
+
+        self.thread:start(self.mod_list[i]["_aPreviewMedia"]["_aImages"][1]["_sBaseUrl"].."/"..self.mod_list[i]["_aPreviewMedia"]["_aImages"][1]["_sFile"])
+
+        repeat
+            data = love.thread.getChannel('data'):pop()
+            if data then
+                image = true
+            end
+        until image
+
+        local preview = love.filesystem.newFileData(love.data.decode("string", "base64", data.body), "preview.png")
+        preview = love.graphics.newImage(preview)
+        self.preview_list[i]["preview"] = preview
     end
+    self.state = "SEARCH"
+    self:drawButton()
+    self.is_loading = false
+    self.loading_sound:stop()
 end
 
-function ShopChannel:changePage(page_num)
+function ShopChannel:changePage()
     self.offset = 0
-
-    self.current_page = self.current_page + (page_num or 0)
 
     self.current_page = Utils.clamp(self.current_page, 1, self.pages)
 
-    local code, body, _ = https.request("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
+    self.mod_list = JSON.decode(self.response)
 
-    self.request_code = code
-
-    body = JSON.decode(body)
-
-    self.mod_list = body
-
-    self:setPreview()
-
-    self:removePageButton()
-
-    self:pageButton() 
-end
+    self.is_loading = true
+    self.loading_rotation = 1
+    self.loading_sound:play()
+    self.callback = function ()
+        self:setPreview()
+        self:removePageButton()
+        self:pageButton()
+    end
+    self.thread:start("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
+end 
 
 function ShopChannel:removeButton()
     for index, obj in pairs(self.buttons) do
@@ -280,14 +340,13 @@ function ShopChannel:pageButton()
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
-            self.timer:after(0.1, function ()
+            self.current_page = self.current_page - 1
+            self.callback = function ()
                 self.is_loading = false
-                self:changePage(-1)
+                self:changePage()
                 self:removeButton()
-                self:drawButton()
-                self.is_loading = false
-                self.loading_sound:stop()
-                end)
+            end
+            self.thread:start("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
             end)
         self.screen_helper:addChild(self.left_button)
     end
@@ -297,14 +356,13 @@ function ShopChannel:pageButton()
             self.is_loading = true
             self.loading_rotation = 1
             self.loading_sound:play()
-            self.timer:after(0.1, function ()
+            self.current_page = self.current_page + 1
+            self.callback = function ()
                 self.is_loading = false
-                self:changePage(1)
+                self:changePage()
                 self:removeButton()
-                self:drawButton()
-                self.is_loading = false
-                self.loading_sound:stop()
-                end)
+            end
+            self.thread:start("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
             end)
         self.screen_helper:addChild(self.right_button)
     end
@@ -319,29 +377,27 @@ function ShopChannel:drawMainButton()
         self.is_loading = true
         self.loading_rotation = 1
         self.loading_sound:play()
-        self.timer:after(0.1, function()
-            self.current_page = 1
+        self.current_page = 1
+        self:drawButton()
+        self.callback = function()
             self:changePage()
-            self:setPreview()
-            self:drawButton()
             self:removeMainButton()
             self.offset = 0
-            Game.wii_menu.state = "SEARCH"
-            self.is_loading = false
-            self.loading_sound:stop()
-        end)
+        end
+        
+        self.thread:start("https://gamebanana.com/apiv8/Mod/ByCategory?_csvProperties=@gbprofile&_aCategoryRowIds[]=16803&_nPerpage=10&_nPage="..self.current_page)
+
     end, 249, 145)
     self.screen_helper:addChild(self.access_btn)
 end
 
-function ShopChannel:changeMod(mod_num)
+function ShopChannel:changeMod(mod_num, response)
     self.mod = self.mod + (mod_num or 0)
     self.mod = Utils.clamp(self.mod, 1, 10)
 
     self.mod_name = self.mod_list[self.mod]["_sName"]
 
-    local _, preview = https.request(self.mod_list[self.mod]["_aPreviewMedia"]["_aImages"][1]["_sBaseUrl"].."/"..self.mod_list[self.mod]["_aPreviewMedia"]["_aImages"][1]["_sFile"])
-    preview = love.filesystem.newFileData(preview, "preview.png")
+    preview = love.filesystem.newFileData(response, "preview.png")
     preview = love.graphics.newImage(preview)
 
     local date = self.mod_list[self.mod]["_tsDateAdded"]

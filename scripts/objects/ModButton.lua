@@ -17,17 +17,19 @@ function ModButton:onClick()
 	Game.wii_menu.is_loading = true
 	Game.wii_menu.loading_rotation = 1
 	Game.wii_menu.loading_sound:play()
-	Game.wii_menu.timer:after(0.5, function ()
+	Game.wii_menu.callback = function ()
 		Game.wii_menu.mod = self.id
-		Game.wii_menu:changeMod()
+		Game.wii_menu:changeMod(0, Game.wii_menu.response)
 		Game.wii_menu:removeButton()
 		Game.wii_menu:removePageButton()
 		Game.wii_menu:drawDownloadButton()
 		Game.wii_menu.btn_cooldown = 0.5
 		Game.wii_menu.state = "GAME"
 		Game.wii_menu.is_loading = false
-		Game.wii_menu.loading_sound:stop()
-	end)
+        Game.wii_menu.loading_sound:stop()
+	end
+
+	Game.wii_menu.thread:start(Game.wii_menu.mod_list[Game.wii_menu.mod]["_aPreviewMedia"]["_aImages"][1]["_sBaseUrl"].."/"..Game.wii_menu.mod_list[Game.wii_menu.mod]["_aPreviewMedia"]["_aImages"][1]["_sFile"])
 end
 
 function ModButton:update()
