@@ -17,9 +17,11 @@ function ModButton:onClick()
 	Game.wii_menu.is_loading = true
 	Game.wii_menu.loading_rotation = 1
 	Game.wii_menu.loading_sound:play()
-	Game.wii_menu.callback = function ()
+	self.can_hover = false
+	Game.wii_menu.callback = function()
+		self.can_hover = true
 		Game.wii_menu.mod = self.id
-		Game.wii_menu:changeMod(0, Game.wii_menu.response)
+		Game.wii_menu:changeMod(0)
 		Game.wii_menu:removeButton()
 		Game.wii_menu:removePageButton()
 		Game.wii_menu:drawDownloadButton()

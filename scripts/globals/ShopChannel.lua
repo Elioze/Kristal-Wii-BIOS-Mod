@@ -95,7 +95,7 @@ function ShopChannel:enter()
 
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "button", function ()
         self.is_loading = true
-        self.loading_rotation = 1
+        if not self.is_loading then self.loading_rotation = 1 end
         self.loading_sound:play()
         self.current_page = 1
         self.callback = function()
@@ -123,7 +123,7 @@ function ShopChannel:enter()
             self:drawMainButton()
         else
             self.is_loading = true
-            self.loading_rotation = 1
+            if not self.is_loading then self.loading_rotation = 1 end
             self.loading_sound:play()
             self.callback = function ()
                 self.state = "SEARCH"
@@ -148,7 +148,7 @@ function ShopChannel:update(dt)
     self.screen_helper:update()
     self.screen_helper_upper:update()
 
-    if self.is_loading then
+    if self.is_loading and not self.is_downloading then
         self.loading_rotation = self.loading_rotation + 1 * dt
         local data = love.thread.getChannel('data'):pop()
         if data then
@@ -292,11 +292,12 @@ function ShopChannel:download()
         game:close()
         extractZIP("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/", true)
         checkMod("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/")
-        self.state = "SEARCH"
-        self:drawButton()
-        self:changePage()
-        self:removeDownloadButton()
+        --self.state = "SEARCH"
+        --self:drawButton()
+        --self:changePage()
+        --self:removeDownloadButton()
         self.screen_helper:addChild(self.back_button)
+        self.dl_anim:remove()
     end
 end
 
@@ -305,10 +306,10 @@ function ShopChannel:drawDownloadButton()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
-        local dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
+        self.dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
         end)
         self:download()
-        self.screen_helper:addChild(dl_anim)
+        self.screen_helper:addChild(self.dl_anim)
     end, 162, 72)
     self.screen_helper:addChild(self.download_button)
 end
@@ -385,7 +386,7 @@ function ShopChannel:changePage()
     self.mod_list = JSON.decode(self.response)
 
     self.is_loading = true
-    self.loading_rotation = 1
+    if not self.is_loading then self.loading_rotation = 1 end
     self.loading_sound:play()
     self.callback = function ()
         self:setPreview()
@@ -418,7 +419,7 @@ function ShopChannel:pageButton()
     if self.current_page ~= 1 then
         self.left_button = ShopButton(SCREEN_WIDTH/2 + 92, SCREEN_HEIGHT - 45, "button_left", function()
             self.is_loading = true
-            self.loading_rotation = 1
+            if not self.is_loading then self.loading_rotation = 1 end
             self.loading_sound:play()
             self.current_page = self.current_page - 1
             self.callback = function ()
@@ -434,7 +435,7 @@ function ShopChannel:pageButton()
     if self.current_page ~= self.pages then
         self.right_button = ShopButton(SCREEN_WIDTH/2 + 198, SCREEN_HEIGHT - 45, "button_right", function() 
             self.is_loading = true
-            self.loading_rotation = 1
+            if not self.is_loading then self.loading_rotation = 1 end
             self.loading_sound:play()
             self.current_page = self.current_page + 1
             self.callback = function ()
@@ -455,7 +456,7 @@ end
 function ShopChannel:drawMainButton()
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "button", function ()
         self.is_loading = true
-        self.loading_rotation = 1
+        if not self.is_loading then self.loading_rotation = 1 end
         self.loading_sound:play()
         self.current_page = 1
         self:drawButton()
@@ -471,13 +472,13 @@ function ShopChannel:drawMainButton()
     self.screen_helper:addChild(self.access_btn)
 end
 
-function ShopChannel:changeMod(mod_num, response)
+function ShopChannel:changeMod(mod_num)
     self.mod = self.mod + (mod_num or 0)
     self.mod = Utils.clamp(self.mod, 1, 10)
 
     self.mod_name = self.mod_list[self.mod]["_sName"]
 
-    preview = love.filesystem.newFileData(response, "preview.png")
+    local preview = love.filesystem.newFileData(self.response, "preview.png")
     preview = love.graphics.newImage(preview)
 
     local date = self.mod_list[self.mod]["_tsDateAdded"]
