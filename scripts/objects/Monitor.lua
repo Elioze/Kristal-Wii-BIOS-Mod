@@ -166,11 +166,32 @@ function Monitor:update()
 			self:setLayer(1)
 		end
 		if self:canClick() and not self.pressed and love.mouse.isDown(1) then
-			Assets.playSound("wii/button_pressed")
+			Assets.playSound("wii/zoom_in")
 			--[[Game.musicplay:stop()
 			Game.musicplay = nil
 			Mod:setState("Pregame", self.mod_id)]]
 			Game.wii_menu.substate = "CHANNEL"
+			Game.musicplay:setVolume(Utils.lerp(1, 0, 1))
+			print(self.mod_id)
+			self.current_mod = self.mod_id
+			print(self.current_mod)
+			local preview
+			if not Utils.startsWith(self.mod_id, "wii_") then
+				preview = Kristal.Mods.getMod(self.mod_id).path.."/preview.ogg"
+			else
+				preview = "assets/music/preview.ogg"
+			end
+			if love.filesystem.getInfo(preview) then
+				self.preview_music = love.audio.newSource(preview, "stream")
+				self.preview_music:setPitch(1)
+				self.preview_music:setLooping(false)
+			else
+				self.preview_music = love.audio.newSource("assets/music/mod_menu.ogg", "stream")
+				self.preview_music:setPitch(0.95)
+				self.preview_music:setLooping(true)
+			end
+			self.preview_music:play()
+			self.preview_music:setVolume(Utils.lerp(0, 1, 1))
 			self.transition = true
 		elseif self:canClick() and not self.pressed and love.mouse.isDown(2) then
 			print("Dragging " .. self.mod_id)
@@ -179,6 +200,15 @@ function Monitor:update()
 		if self.hovered then
 			self.hovered = false
 			self:setLayer(0)
+		end
+	end
+
+	if Game.wii_menu.substate == "CHANNEL" then
+		if Input.pressed("confirm") then
+			self.preview_music:stop()
+			Game.musicplay:stop()
+			Game.musicplay = nil
+			Mod:setState("Pregame", self.current_mod)
 		end
 	end
 end

@@ -98,6 +98,10 @@ function MainMenu:update()
 		else
 			Mod:setState(self.reason, self.maintenance)
 		end
+	elseif self.substate == "CHANNEL" then
+		if self.alpha < 0 then
+			self.alpha = self.alpha + 0.05
+		end
 	end
 end
 
@@ -124,7 +128,6 @@ function MainMenu:draw()
 		love.graphics.print(Utils.titleCase(Utils.sub(os.date("%a", self.message_date), 1, 3)), 230, 400, 0, 1.25, 1.25)
 		love.graphics.print(day.day.."/"..day.month, 320, 400, 0, 1.25, 1.25)
 	elseif self.substate == "CHANNEL" then
-		
 	end
 	
 	local r, g, b = Utils.unpack(Mod.Themes[Game.wii_data["theme"]]["BG"])
