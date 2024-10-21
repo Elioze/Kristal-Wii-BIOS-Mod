@@ -74,6 +74,9 @@ function Monitor:init(mod_id, index)
 	self.bubble_corner = Assets.getTexture("menu/my_Balloon_a")
 	self.bubble_width = Assets.getTexture("menu/my_Beta16x16_a")
 	self.cd = 0
+
+	self.timer_scale = 0
+	self.timer_pos = 0
 	
 	self.tick = 0
 	self.speed = 1/5
@@ -107,12 +110,14 @@ function Monitor:init(mod_id, index)
 			print(self.previewdata)
 		end
 	end
+
+	print(unpack(self:getDebugInfo()))
 end
 
 function Monitor:getDebugInfo()
 	local info = super.getDebugInfo(self)
 	if not Utils.startsWith(self.mod_id, "wii_") then
-		table.insert(info, "Mod: "..Kristal.Mods.getMod(self.mod_id).name.." ("..self.mod_id..")")
+		--table.insert(info, "Mod: "..Kristal.Mods.getMod(self.mod_id).name.." ("..self.mod_id..")")
 		local icontest = "False"
 		if self.icon == "channels/gc_disc" or self.icon == "channels/wii_disc" then
 			icontest = "True"
@@ -132,6 +137,18 @@ function Monitor:update()
 	if Mod.popup_on then return end
 	local mx, my = love.mouse.getPosition()
 	local screen_x, screen_y = self:getScreenPos()
+
+	if self.transition then
+		self.timer_scale = self.timer_scale + DT*2
+		self:setScale(math.abs(Utils.ease(1, SCREEN_WIDTH/self.width, self.timer_scale, "linear")), math.abs(Utils.ease(1, SCREEN_HEIGHT/self.height, self.timer_scale, "linear")))
+
+		self.timer_pos = self.timer_pos + DT/5
+		self:setPosition(Utils.ease(self.x, -5, self.timer_scale, "linear"), Utils.ease(self.y, -10, self.timer_scale, "linear"))
+
+		if (self.x == SCREEN_WIDTH/2 - 5 and self.y == SCREEN_HEIGHT/2 - 10) and (1 == SCREEN_WIDTH/self.width and 1 == SCREEN_HEIGHT/self.height) then
+			self.transition = false
+		end
+	end
 	
 	if self.anim then
 		local index = ((math.floor(self.tick/self.speed))%#self.anim)+1
@@ -150,9 +167,11 @@ function Monitor:update()
 		end
 		if self:canClick() and not self.pressed and love.mouse.isDown(1) then
 			Assets.playSound("wii/button_pressed")
-			Game.musicplay:stop()
+			--[[Game.musicplay:stop()
 			Game.musicplay = nil
-			Mod:setState("Pregame", self.mod_id)
+			Mod:setState("Pregame", self.mod_id)]]
+			Game.wii_menu.substate = "CHANNEL"
+			self.transition = true
 		elseif self:canClick() and not self.pressed and love.mouse.isDown(2) then
 			print("Dragging " .. self.mod_id)
 		end
@@ -228,7 +247,7 @@ function Monitor:canClick()
 end
 
 function Monitor:canHover()
-	return ((not Game.wii_menu.tvSheet.popUp) or Game.wii_menu.tvSheet.popUp:isRemoved()) and Game.wii_menu.state == "IDLE"
+	return Game.wii_menu.substate ~= "CHANNEL" and ((not Game.wii_menu.tvSheet.popUp) or Game.wii_menu.tvSheet.popUp:isRemoved()) and Game.wii_menu.state == "IDLE"
 end
 
 return Monitor

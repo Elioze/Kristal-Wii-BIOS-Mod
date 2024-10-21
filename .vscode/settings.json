@@ -17,5 +17,6 @@
         "${3rd}/love2d/library",
         "${env:KRISTAL_PATH}",
         //"${extensionInstallFolder:tomblind.local-lua-debugger-vscode}/debugger"
-    ]
+    ],
+    "Lua.completion.autoRequire": false
 }
