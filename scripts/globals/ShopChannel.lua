@@ -35,7 +35,7 @@ function ShopChannel:init()
         pages = math.ceil(#pages / 2)
         self.pages = pages
     else
-        self.error = true
+        self.error_code = self.request_code
     end
 
     self.mod = 1
@@ -81,7 +81,7 @@ function ShopChannel:enter()
 	
 	self.clickable = true
 
-    if self.error then
+    --[[if self.error then
         self.popUp = popUp("Could not load Mods\n \n \nError code: "..self.request_code, {"OK"}, function(clicked) 
             if Game.musicplay then
                 Game.musicplay:remove()
@@ -91,7 +91,7 @@ function ShopChannel:enter()
             Mod:setState("MainMenu", false)
         end)
 		self.screen_helper_upper:addChild(self.popUp)
-    end
+    end]]
 
     self.access_btn = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT/2, "button", function ()
         self.is_loading = true
@@ -110,7 +110,7 @@ function ShopChannel:enter()
     self.screen_helper:addChild(self.access_btn)
 
     self.back_button = TextButtonInApp(140, 440, "Wii Menu", function ()
-        if Game.wii_menu.state == "MAIN" then
+        if Game.wii_menu.state == "MAIN" or Game.wii_menu.state == "ERROR" then
             if Game.musicplay then
                 Game.musicplay:remove()
                 Game.musicplay = nil
@@ -155,6 +155,9 @@ function ShopChannel:update(dt)
             self.request_code = data.code
             self.response = love.data.decode("string", "base64", data.body)
             self.callback()
+            if self.callback() then
+                self:download()
+            end
         end
     end
 
@@ -168,13 +171,18 @@ function ShopChannel:update(dt)
 
     if self.request_code ~= 200 then
         self.request_code = 200
-        self.error = true
+        Game.musicplay:stop()
+        self:removeMainButton()
+        self:removeDownloadButton()
+        self:removeButton()
+        self:removePageButton()
+        self.state = "ERROR"
     end
 
     if Game.wii_menu.cooldown and Game.wii_menu.cooldown > 0 then Game.wii_menu.cooldown = Game.wii_menu.cooldown - DT end
     if Game.wii_menu.btn_cooldown and Game.wii_menu.btn_cooldown > 0 then Game.wii_menu.btn_cooldown = Game.wii_menu.btn_cooldown - DT end
 
-    if not Game.musicplay:isPlaying() then
+    if not Game.musicplay:isPlaying() and self.state ~= "ERROR" then
         Game.musicplay = Music("shop")
         Game.musicplay:setLooping(true)
     end
@@ -207,109 +215,123 @@ function ShopChannel:update(dt)
     Kristal.showCursor()
 end
 
+function ShopChannel:canBeDownloaded()
+    local file_id = self.mod_list[self.mod]["_aFiles"][1]["_sRow"]
+    self.thread:start("https://gamebanana.com/apiv11/File/"..file_id.."/RawFileList")
 
-
-function ShopChannel:download()
-    self.thread:start(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
-
-    local lfs = love.filesystem
-
-    --- Library made by Davidobot (https://love2d.org/forums/viewtopic.php?t=78293)
-    local function enu(folder, saveDir)
-        local filesTable = lfs.getDirectoryItems(folder)
-        if saveDir ~= "" and not lfs.getInfo(saveDir, "directory") then lfs.createDirectory(saveDir) end
-        
-        for i,v in ipairs(filesTable) do
-            local file = folder.."/"..v
-            local saveFile = saveDir.."/"..v
-            if saveDir == "" then saveFile = v end
-            
-            if lfs.getInfo(file).type == "directory" then
-                lfs.createDirectory(saveFile)
-                enu(file, saveFile)
-            else
-                lfs.write(saveFile, tostring(lfs.read(file)))
+    self.callback = function()
+        if not(self.mod_list[self.mod]["_aFiles"][1]["_bContainsExe"] or Utils.contains(self.mod_list[self.mod]["_aFiles"][1]["_sFile"], ".rar")) then
+            return false
+        elseif Utils.contains(self.mod_list[self.mod]["_aFiles"][1]["_sFile"], ".zip") then
+            if Utils.contains(self.response, ".love") then
+                return false
             end
         end
-    end
-
-    local function extractZIP(file, dir, delete)
-        local dir = dir or ""
-        local temp = tostring(math.random(1000, 2000))
-        success = lfs.mount(file, temp)
-            if success then enu(temp, dir) end
-        lfs.unmount(file)
-        if delete then lfs.remove(file) end
-    end
-    --- Library made by Davidobot (https://love2d.org/forums/viewtopic.php?t=78293)
-
-    local function checkMod(mod_folder)
-        if lfs.getInfo(mod_folder.."/mod.lua") then return end
-
-        local function removeDirectory(directory)
-            local files = lfs.getDirectoryItems(directory)
-            for _, file in ipairs(files) do
-                local path = directory .. "/" .. file
-                if lfs.getInfo(path, "file") then
-                    lfs.remove(path)
-                elseif lfs.getInfo(path, "directory") then
-                    removeDirectory(path)
-                end
-            end
-            lfs.remove(directory)
-        end
-
-        local function copyDirectory(oldDir, newDir)
-            lfs.createDirectory(newDir)
-
-            local files = lfs.getDirectoryItems(oldDir)
-            for _, file in ipairs(files) do
-                local oldPath = oldDir .. "/" .. file
-                local newPath = newDir .. "/" .. file
-                if lfs.getInfo(oldPath, "file") then
-                    local data = lfs.read(oldPath)
-                    lfs.write(newPath, data)
-                elseif lfs.getInfo(oldPath, "directory") then
-                    copyDirectory(oldPath, newPath)
-                end
-            end
-            removeDirectory(oldDir)
-        end
-
-        local files = lfs.getDirectoryItems(mod_folder)
-        for _, file in ipairs(files) do
-            if lfs.getInfo(mod_folder..file.."/mod.lua") then
-                    copyDirectory(mod_folder..file, mod_folder)
-            end
-        end
-    end
-
-    self.is_downloading = true
-    self.callback = function(data)
-        self.is_downloading = false
-        local game = lfs.newFile("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "w")
-        game:write(love.data.decode("string", "base64", data.body))
-        game:close()
-        extractZIP("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/", true)
-        checkMod("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/")
-        --self.state = "SEARCH"
-        --self:drawButton()
-        --self:changePage()
-        --self:removeDownloadButton()
-        self.screen_helper:addChild(self.back_button)
-        self.dl_anim:remove()
     end
 end
 
-function ShopChannel:drawDownloadButton()
-    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 120, "button", function()
+function ShopChannel:download()
         self.screen_helper:removeChild(self.back_button)
         self:removeDownloadButton()
         self.state = "DOWNLOAD"
         self.dl_anim = DownloadCutscene(1--[[Utils.round(Utils.random(0, 1))]], function ()
         end)
-        self:download()
         self.screen_helper:addChild(self.dl_anim)
+
+        self.thread:start(self.mod_list[self.mod]["_aFiles"][1]["_sDownloadUrl"])
+
+        local lfs = love.filesystem
+
+        --- Library made by Davidobot (https://love2d.org/forums/viewtopic.php?t=78293)
+        local function enu(folder, saveDir)
+            local filesTable = lfs.getDirectoryItems(folder)
+            if saveDir ~= "" and not lfs.getInfo(saveDir, "directory") then lfs.createDirectory(saveDir) end
+            
+            for i,v in ipairs(filesTable) do
+                local file = folder.."/"..v
+                local saveFile = saveDir.."/"..v
+                if saveDir == "" then saveFile = v end
+                
+                if lfs.getInfo(file).type == "directory" then
+                    lfs.createDirectory(saveFile)
+                    enu(file, saveFile)
+                else
+                    lfs.write(saveFile, tostring(lfs.read(file)))
+                end
+            end
+        end
+
+        local function extractZIP(file, dir, delete)
+            local dir = dir or ""
+            local temp = tostring(math.random(1000, 2000))
+            success = lfs.mount(file, temp)
+                if success then enu(temp, dir) end
+            lfs.unmount(file)
+            if delete then lfs.remove(file) end
+        end
+        --- Library made by Davidobot (https://love2d.org/forums/viewtopic.php?t=78293)
+
+        local function checkMod(mod_folder)
+            if lfs.getInfo(mod_folder.."/mod.lua") then return end
+
+            local function removeDirectory(directory)
+                local files = lfs.getDirectoryItems(directory)
+                for _, file in ipairs(files) do
+                    local path = directory .. "/" .. file
+                    if lfs.getInfo(path, "file") then
+                        lfs.remove(path)
+                    elseif lfs.getInfo(path, "directory") then
+                        removeDirectory(path)
+                    end
+                end
+                lfs.remove(directory)
+            end
+
+            local function copyDirectory(oldDir, newDir)
+                lfs.createDirectory(newDir)
+
+                local files = lfs.getDirectoryItems(oldDir)
+                for _, file in ipairs(files) do
+                    local oldPath = oldDir .. "/" .. file
+                    local newPath = newDir .. "/" .. file
+                    if lfs.getInfo(oldPath, "file") then
+                        local data = lfs.read(oldPath)
+                        lfs.write(newPath, data)
+                    elseif lfs.getInfo(oldPath, "directory") then
+                        copyDirectory(oldPath, newPath)
+                    end
+                end
+                removeDirectory(oldDir)
+            end
+
+            local files = lfs.getDirectoryItems(mod_folder)
+            for _, file in ipairs(files) do
+                if lfs.getInfo(mod_folder..file.."/mod.lua") then
+                        copyDirectory(mod_folder..file, mod_folder)
+                end
+            end
+        end
+
+        self.is_downloading = true
+        self.callback = function(data)
+            self.is_downloading = false
+            local game = lfs.newFile("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "w")
+            game:write(love.data.decode("string", "base64", data.body))
+            game:close()
+            extractZIP("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"], "mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/", true)
+            checkMod("mods/"..self.mod_list[self.mod]["_aFiles"][1]["_sFile"]:gsub(".zip", "").."/")
+            --self.state = "SEARCH"
+            --self:drawButton()
+            --self:changePage()
+            --self:removeDownloadButton()
+            self.screen_helper:addChild(self.back_button)
+            self.dl_anim:remove()
+        end
+end
+
+function ShopChannel:drawDownloadButton()
+    self.download_button = ShopButton(SCREEN_WIDTH/2, SCREEN_HEIGHT - 120, "button", function()
+        self:download()
     end, 162, 72)
     self.screen_helper:addChild(self.download_button)
 end
@@ -583,6 +605,11 @@ function ShopChannel:draw()
         Draw.setColor(0, 0, 1)
         local mod_name_x = (SCREEN_WIDTH - Assets.getFont("main"):getWidth(self.mod_name)*0.75)/2
         love.graphics.print(self.mod_name, mod_name_x, 120, 0, 0.75, 0.75)
+    elseif self.state == "ERROR" then
+        love.graphics.print("Wii Kromer Channel", 104, 45)
+        Draw.setColor(1, 0, 0)
+        love.graphics.print("Error Code: "..self.error_code, 120, 90, 0, 0.75, 0.75)
+        love.graphics.print("An error has occurred that cannot be resolved\nat this time. \n \nPlease try again later.", 120, 120, 0, 0.75, 0.75)
     end
 
     self.screen_helper:draw()
